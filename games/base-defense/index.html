@@ -2,102 +2,59 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>단일 타워 기지 디펜스 v1.0 - sojang ai Arcade</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>단일 타워 기지 디펜스 - sojang ai Arcade</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        body { background: #0b0c10; color: #fff; font-family: sans-serif; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-container { position: relative; width: 100vw; height: 100vh; }
-        canvas { display: block; background: #1f2833; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        body { background: #0f172a; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
+        #game-container { position: relative; width: 100%; height: 100%; }
         
-        .top-ui { position: absolute; top: 15px; left: 20px; font-size: 16px; font-weight: bold; text-shadow: 2px 2px 4px #000; pointer-events: none; display: flex; gap: 15px; z-index: 5; }
-        .stat-box { background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
-        .gold-text { color: #f1c40f; }
-        .wave-text { color: #e74c3c; }
-        .hp-text { color: #2ecc71; }
+        .top-nav { position: absolute; top: 10px; right: 10px; z-index: 20; }
+        .home-btn { background: rgba(30, 41, 59, 0.8); color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 12px; border-radius: 16px; font-weight: bold; text-decoration: none; font-size: 12px; }
 
-        .top-nav { position: absolute; top: 15px; right: 20px; z-index: 5; }
-        .home-btn { background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 16px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; }
-        .home-btn:hover { background: #38bdf8; color: #0f172a; }
+        .header-status { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; z-index: 20; font-size: 11px; font-weight: bold; flex-wrap: wrap; }
+        .stat-card { background: rgba(15, 23, 42, 0.85); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); }
+        .gold-text { color: #facc15; }
+        .hp-text { color: #ef4444; }
 
-        .upgrade-panel { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; background: rgba(0,0,0,0.8); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); z-index: 5; }
-        .up-btn { background: #34495e; color: #fff; border: 1px solid #5d6d7e; border-radius: 8px; padding: 8px 12px; font-size: 13px; cursor: pointer; text-align: center; min-width: 105px; transition: 0.1s; }
-        .up-btn:hover { background: #4a6572; transform: translateY(-2px); }
-        .up-btn:active { transform: translateY(0); }
-        .up-btn span { display: block; font-size: 11px; color: #f1c40f; margin-top: 3px; }
+        .upgrade-bar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 20; max-width: 95%; overflow-x: auto; }
+        .up-btn { background: #1e293b; color: #f8fafc; border: 1px solid #38bdf8; padding: 8px 12px; border-radius: 10px; font-size: 11px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+        .up-btn:active { background: #38bdf8; color: #0f172a; }
 
-        #game-over { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
-        #game-over h1 { color: #e74c3c; font-size: 50px; margin-bottom: 10px; }
-        #game-over p { font-size: 20px; margin-bottom: 25px; color: #ccc; }
-        
-        .btn-group { display: flex; gap: 15px; }
-        .btn-ui { padding: 12px 30px; font-size: 18px; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; transition: 0.2s; text-decoration: none; }
-        #restart-btn { background: #2ecc71; color: #fff; }
-        #restart-btn:hover { background: #27ae60; transform: scale(1.05); }
-        #lobby-btn { background: #38bdf8; color: #0f172a; }
-        #lobby-btn:hover { background: #7dd3fc; transform: scale(1.05); }
+        canvas { display: block; width: 100%; height: 100%; touch-action: none; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div class="top-ui">
-        <div class="stat-box">💰 골드: <span id="gold" class="gold-text">0</span></div>
-        <div class="stat-box">🌊 웨이브: <span id="wave" class="wave-text">1</span></div>
-        <div class="stat-box">❤️ 기지 체력: <span id="hp" class="hp-text">100 / 100</span></div>
+    <div class="header-status">
+        <div class="stat-card">🪙 골드: <span id="gold-val" class="gold-text">100</span></div>
+        <div class="stat-card">❤️ 기지 HP: <span id="hp-val" class="hp-text">100/100</span></div>
+        <div class="stat-card">🌊 Wave: <span id="wave-val" style="color:#38bdf8;">1</span></div>
     </div>
 
     <div class="top-nav">
-        <a href="../../index.html" class="home-btn">🏠 로비로 이동</a>
+        <a href="../../index.html" class="home-btn">🏠 로비</a>
     </div>
 
-    <div class="upgrade-panel">
-        <button class="up-btn" onclick="upgrade('damage')">⚔️ 공격력 (Lv.<span id="lvl-damage">1</span>)<span id="cost-damage">50G</span></button>
-        <button class="up-btn" onclick="upgrade('speed')">⚡ 공속 (Lv.<span id="lvl-speed">1</span>)<span id="cost-speed">75G</span></button>
-        <button class="up-btn" onclick="upgrade('range')">🎯 사거리 (Lv.<span id="lvl-range">1</span>)<span id="cost-range">60G</span></button>
-        <button class="up-btn" onclick="upgrade('multi')">🏹 멀티샷 (Lv.<span id="lvl-multi">1</span>)<span id="cost-multi">150G</span></button>
-        <button class="up-btn" onclick="upgrade('repair')">🔧 기지 수리<span>50G</span></button>
+    <div class="upgrade-bar">
+        <button class="up-btn" onclick="upgrade('atk')">⚔️ 공격력 (50G)</button>
+        <button class="up-btn" onclick="upgrade('speed')">⚡ 공속 (60G)</button>
+        <button class="up-btn" onclick="upgrade('range')">🎯 사거리 (40G)</button>
+        <button class="up-btn" onclick="upgrade('repair')">🛠️ 수리 (30G)</button>
     </div>
 
-    <div id="game-over">
-        <h1>기지 함락!</h1>
-        <p>최종 방어 웨이브: <span id="final-wave">1</span></p>
-        <div class="btn-group">
-            <button id="restart-btn" class="btn-ui" onclick="resetGame()">다시 시작</button>
-            <a href="../../index.html" id="lobby-btn" class="btn-ui">로비로 나가기</a>
-        </div>
-    </div>
-
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="defenseCanvas"></canvas>
 </div>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('defenseCanvas');
 const ctx = canvas.getContext('2d');
 
 let width, height;
-let gold = 100;
-let wave = 1;
-let isGameOver = false;
-
-const tower = {
-    x: 0, y: 0, radius: 30,
-    hp: 100, maxHp: 100,
-    damage: 15,
-    attackSpeed: 1,
-    range: 180,
-    targets: 1,
-    cooldown: 0,
-    levels: { damage: 1, speed: 1, range: 1, multi: 1 },
-    costs: { damage: 50, speed: 75, range: 60, multi: 150 }
-};
-
-let enemies = [];
-let bullets = [];
-let particles = [];
-let waveTimer = 0;
-let enemiesToSpawn = 10;
-let spawnedCount = 0;
+let gold = 100, hp = 100, maxHp = 100, wave = 1;
+let tower = { x: 0, y: 0, range: 120, atk: 15, cooldown: 0, maxCooldown: 30 };
+let enemies = [], bullets = [];
 
 function resize() {
     width = canvas.width = window.innerWidth;
@@ -107,245 +64,114 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
-class Enemy {
-    constructor() {
-        let side = Math.floor(Math.random() * 4);
-        if (side === 0) { this.x = Math.random() * width; this.y = -20; }
-        else if (side === 1) { this.x = width + 20; this.y = Math.random() * height; }
-        else if (side === 2) { this.x = Math.random() * width; this.y = height + 20; }
-        else { this.x = -20; this.y = Math.random() * height; }
-
-        let hpBonus = (wave - 1) * 15;
-        this.maxHp = 30 + hpBonus;
-        this.hp = this.maxHp;
-        this.speed = 1.2 + Math.random() * 0.4;
-        this.radius = 12;
-        this.reward = 10 + wave * 2;
-    }
-
-    update() {
-        let angle = Math.atan2(tower.y - this.y, tower.x - this.x);
-        this.x += Math.cos(angle) * this.speed;
-        this.y += Math.sin(angle) * this.speed;
-    }
-
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#e74c3c';
-        ctx.fill();
-        ctx.closePath();
-
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(this.x - 12, this.y - 18, 24, 4);
-        ctx.fillStyle = '#2ecc71';
-        ctx.fillRect(this.x - 12, this.y - 18, (this.hp / this.maxHp) * 24, 4);
-    }
+function spawnEnemy() {
+    let angle = Math.random() * Math.PI * 2;
+    let dist = Math.max(width, height) / 2 + 50;
+    enemies.push({
+        x: tower.x + Math.cos(angle) * dist,
+        y: tower.y + Math.sin(angle) * dist,
+        hp: 20 + wave * 5,
+        maxHp: 20 + wave * 5,
+        speed: 1.2 + Math.random() * 0.5
+    });
 }
 
-class Bullet {
-    constructor(startX, startY, targetEnemy, damage) {
-        this.x = startX;
-        this.y = startY;
-        this.target = targetEnemy;
-        this.damage = damage;
-        this.speed = 9;
-        this.radius = 4;
-    }
-
-    update() {
-        if (!this.target || this.target.hp <= 0) return true;
-
-        let angle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
-        this.x += Math.cos(angle) * this.speed;
-        this.y += Math.sin(angle) * this.speed;
-
-        let dist = Math.hypot(this.target.x - this.x, this.target.y - this.y);
-        if (dist < this.target.radius + this.radius) {
-            this.target.hp -= this.damage;
-            createParticles(this.x, this.y, '#f1c40f');
-            return true;
-        }
-        return false;
-    }
-
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#f1c40f';
-        ctx.fill();
-        ctx.closePath();
-    }
-}
-
-class Particle {
-    constructor(x, y, color) {
-        this.x = x; this.y = y;
-        this.color = color;
-        this.vx = (Math.random() - 0.5) * 4;
-        this.vy = (Math.random() - 0.5) * 4;
-        this.alpha = 1;
-    }
-    update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.05; }
-    draw() {
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, this.alpha);
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.restore();
-    }
-}
-
-function createParticles(x, y, color) {
-    for(let i=0; i<5; i++) particles.push(new Particle(x, y, color));
-}
-
-function init() {
-    resize();
-    gold = 100;
-    wave = 1;
-    isGameOver = false;
-    tower.hp = 100; tower.maxHp = 100;
-    tower.damage = 15; tower.attackSpeed = 1; tower.range = 180; tower.targets = 1;
-    tower.levels = { damage: 1, speed: 1, range: 1, multi: 1 };
-    tower.costs = { damage: 50, speed: 75, range: 60, multi: 150 };
-
-    enemies = []; bullets = []; particles = [];
-    spawnedCount = 0; enemiesToSpawn = 10;
-    
-    document.getElementById('game-over').style.display = 'none';
-    updateUI();
-}
+setInterval(spawnEnemy, 1500);
 
 function upgrade(type) {
-    if (isGameOver) return;
-
-    if (type === 'repair') {
-        if (gold >= 50 && tower.hp < tower.maxHp) {
-            gold -= 50;
-            tower.hp = Math.min(tower.maxHp, tower.hp + 40);
-        }
-    } else if (gold >= tower.costs[type]) {
-        gold -= tower.costs[type];
-        tower.levels[type]++;
-        
-        if (type === 'damage') tower.damage += 10;
-        if (type === 'speed') tower.attackSpeed += 0.3;
-        if (type === 'range') tower.range += 30;
-        if (type === 'multi') tower.targets += 1;
-
-        tower.costs[type] = Math.floor(tower.costs[type] * 1.5);
-    }
+    if (type === 'atk' && gold >= 50) { gold -= 50; tower.atk += 5; }
+    else if (type === 'speed' && gold >= 60 && tower.maxCooldown > 10) { gold -= 60; tower.maxCooldown -= 3; }
+    else if (type === 'range' && gold >= 40) { gold -= 40; tower.range += 20; }
+    else if (type === 'repair' && gold >= 30 && hp < maxHp) { gold -= 30; hp = Math.min(maxHp, hp + 30); }
     updateUI();
 }
 
 function updateUI() {
-    document.getElementById('gold').innerText = gold;
-    document.getElementById('wave').innerText = wave;
-    document.getElementById('hp').innerText = `${Math.ceil(tower.hp)} / ${tower.maxHp}`;
-    
-    ['damage', 'speed', 'range', 'multi'].forEach(type => {
-        document.getElementById(`lvl-${type}`).innerText = tower.levels[type];
-        document.getElementById(`cost-${type}`).innerText = `${tower.costs[type]}G`;
-    });
+    document.getElementById('gold-val').innerText = gold;
+    document.getElementById('hp-val').innerText = `${hp}/${maxHp}`;
+    document.getElementById('wave-val').innerText = wave;
 }
 
-function gameOver() {
-    isGameOver = true;
-    document.getElementById('final-wave').innerText = wave;
-    document.getElementById('game-over').style.display = 'flex';
-}
-
-function resetGame() { init(); }
-
-function animate() {
-    requestAnimationFrame(animate);
+function render() {
     ctx.clearRect(0, 0, width, height);
 
-    if (isGameOver) return;
+    // 1. 기지 본체
+    ctx.fillStyle = '#0284c7';
+    ctx.beginPath();
+    ctx.arc(tower.x, tower.y, 30, 0, Math.PI * 2);
+    ctx.fill();
 
-    waveTimer++;
-    if (waveTimer % 60 === 0 && spawnedCount < enemiesToSpawn) {
-        enemies.push(new Enemy());
-        spawnedCount++;
-    }
-
-    if (spawnedCount >= enemiesToSpawn && enemies.length === 0) {
-        wave++;
-        spawnedCount = 0;
-        enemiesToSpawn = 10 + wave * 3;
-        gold += 50 + wave * 10;
-        updateUI();
-    }
-
-    tower.cooldown += 1 / 60;
-    if (tower.cooldown >= (1 / tower.attackSpeed)) {
-        let inRangeEnemies = enemies
-            .map(e => ({ enemy: e, dist: Math.hypot(e.x - tower.x, e.y - tower.y) }))
-            .filter(item => item.dist <= tower.range)
-            .sort((a, b) => a.dist - b.dist);
-
-        if (inRangeEnemies.length > 0) {
-            let fireCount = Math.min(tower.targets, inRangeEnemies.length);
-            for (let i = 0; i < fireCount; i++) {
-                bullets.push(new Bullet(tower.x, tower.y, inRangeEnemies[i].enemy, tower.damage));
-            }
-            tower.cooldown = 0;
-        }
-    }
-
-    particles.forEach((p, idx) => {
-        p.update(); p.draw();
-        if (p.alpha <= 0) particles.splice(idx, 1);
-    });
-
-    bullets.forEach((b, idx) => {
-        let hit = b.update();
-        b.draw();
-        if (hit) bullets.splice(idx, 1);
-    });
-
-    enemies.forEach((e, idx) => {
-        e.update();
-        e.draw();
-
-        if (Math.hypot(e.x - tower.x, e.y - tower.y) < tower.radius + e.radius) {
-            tower.hp -= 10;
-            createParticles(e.x, e.y, '#e74c3c');
-            enemies.splice(idx, 1);
-            updateUI();
-
-            if (tower.hp <= 0) gameOver();
-        }
-
-        if (e.hp <= 0) {
-            gold += e.reward;
-            createParticles(e.x, e.y, '#2ecc71');
-            enemies.splice(idx, 1);
-            updateUI();
-        }
-    });
-
+    // 사거리 표시
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-    ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.arc(tower.x, tower.y, tower.radius, 0, Math.PI * 2);
-    ctx.fillStyle = '#6c5ce7';
-    ctx.shadowColor = '#a29bfe';
-    ctx.shadowBlur = 15;
-    ctx.fill();
-    ctx.closePath();
-    ctx.shadowBlur = 0;
+    // 2. 타워 타겟팅 & 조준
+    tower.cooldown--;
+    if (tower.cooldown <= 0 && enemies.length > 0) {
+        let target = enemies.find(e => Math.hypot(e.x - tower.x, e.y - tower.y) <= tower.range);
+        if (target) {
+            bullets.push({ x: tower.x, y: tower.y, tx: target.x, ty: target.y, speed: 8 });
+            tower.cooldown = tower.maxCooldown;
+        }
+    }
+
+    // 3. 총알 이동
+    bullets.forEach((b, bIdx) => {
+        let dx = b.tx - b.x;
+        let dy = b.ty - b.y;
+        let dist = Math.hypot(dx, dy);
+
+        if (dist < 10) {
+            let enemy = enemies.find(e => Math.hypot(e.x - b.tx, e.y - b.ty) < 20);
+            if (enemy) {
+                enemy.hp -= tower.atk;
+                if (enemy.hp <= 0) {
+                    gold += 10;
+                    enemies = enemies.filter(e => e !== enemy);
+                    updateUI();
+                }
+            }
+            bullets.splice(bIdx, 1);
+        } else {
+            b.x += (dx / dist) * b.speed;
+            b.y += (dy / dist) * b.speed;
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+
+    // 4. 적 이동 및 기지 충돌
+    enemies.forEach((e, eIdx) => {
+        let dx = tower.x - e.x;
+        let dy = tower.y - e.y;
+        let dist = Math.hypot(dx, dy);
+
+        if (dist < 30) {
+            hp -= 10;
+            enemies.splice(eIdx, 1);
+            updateUI();
+        } else {
+            e.x += (dx / dist) * e.speed;
+            e.y += (dy / dist) * e.speed;
+
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, 10, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+
+    requestAnimationFrame(render);
 }
 
-init();
-animate();
+resize();
+updateUI();
+render();
 </script>
 </body>
 </html>

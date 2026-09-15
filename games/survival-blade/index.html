@@ -2,477 +2,195 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>서바이벌 블레이드 v3.4 - sojang ai Arcade</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>서바이벌 블레이드 - sojang ai Arcade</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
-        body { background: #08080c; color: #fff; font-family: sans-serif; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-container { position: relative; width: 100vw; height: 100vh; }
-        canvas { display: block; background: #0f0f18; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        body { background: #0f172a; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
+        #game-container { position: relative; width: 100%; height: 100%; }
         
-        .ui-panel { position: absolute; top: 20px; left: 20px; font-size: 18px; font-weight: bold; text-shadow: 2px 2px 4px #000; pointer-events: none; }
-        .score-box { color: #00ffcc; margin-bottom: 5px; }
-        .tier-box { color: #ffcc00; margin-bottom: 5px; }
-        .blade-box { color: #ff4757; }
-        .tip-box { color: #70a1ff; font-size: 13px; margin-top: 5px; }
+        .top-nav { position: absolute; top: 12px; right: 12px; z-index: 20; }
+        .home-btn { background: rgba(30, 41, 59, 0.8); color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 12px; border-radius: 16px; font-weight: bold; text-decoration: none; font-size: 12px; }
 
-        .top-nav { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 5; }
-        .home-btn { background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 16px; border-radius: 20px; font-weight: bold; text-decoration: none; font-size: 14px; transition: 0.2s; cursor: pointer; }
-        .home-btn:hover { background: #38bdf8; color: #0f172a; }
+        .header-status { position: absolute; top: 12px; left: 12px; display: flex; gap: 8px; z-index: 20; font-size: 12px; font-weight: bold; }
+        .stat-card { background: rgba(15, 23, 42, 0.85); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); }
+        .score-text { color: #facc15; }
 
-        .leaderboard { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 12px 20px; border-radius: 10px; font-size: 14px; border: 1px solid rgba(255,255,255,0.15); min-width: 180px; }
-        .leaderboard h3 { color: #ffcc00; margin-bottom: 8px; border-bottom: 1px solid #444; padding-bottom: 4px; }
-        .rank-item { margin-bottom: 5px; display: flex; justify-content: space-between; gap: 15px; }
-        .rank-me { color: #00ffcc; font-weight: bold; }
-        
-        #game-over { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
-        #game-over h1 { color: #ff4757; font-size: 56px; margin-bottom: 10px; }
-        #game-over p { font-size: 22px; margin-bottom: 25px; color: #ccc; }
-        .btn-group { display: flex; gap: 15px; }
-        .btn-ui { padding: 14px 30px; font-size: 20px; color: #fff; border: none; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.2s; text-decoration: none; }
-        #restart-btn { background: #2ed573; }
-        #restart-btn:hover { background: #26af5f; transform: scale(1.05); }
-        #lobby-btn { background: #38bdf8; color: #0f172a; }
-        #lobby-btn:hover { background: #7dd3fc; transform: scale(1.05); }
+        canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
-        .seo-text { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); font-size: 12px; color: rgba(255,255,255,0.3); text-align: center; pointer-events: none; }
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); flex-direction: column; justify-content: center; align-items: center; z-index: 30; }
+        .modal-content { background: #1e293b; border: 2px solid #38bdf8; padding: 20px; border-radius: 16px; text-align: center; max-width: 90%; }
+        .modal h2 { font-size: 24px; color: #ef4444; margin-bottom: 8px; }
+        .modal p { font-size: 14px; color: #e2e8f0; margin-bottom: 15px; }
+        .btn-group { display: flex; gap: 10px; justify-content: center; }
+        .btn-action { padding: 10px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; text-decoration: none; }
+        .btn-restart { background: #38bdf8; color: #0f172a; }
+        .btn-lobby { background: #64748b; color: #fff; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
+    <div class="header-status">
+        <div class="stat-card">⚔️ 블레이드: <span id="blade-count" class="score-text">1개 (T1)</span></div>
+        <div class="stat-card">🏆 생존: <span id="alive-count" class="score-text">10명</span></div>
+    </div>
+
     <div class="top-nav">
-        <a href="../../index.html" class="home-btn">🏠 오락실 로비로 이동</a>
+        <a href="../../index.html" class="home-btn">🏠 로비</a>
     </div>
 
-    <div class="ui-panel">
-        <div class="score-box">점수: <span id="score">0</span></div>
-        <div class="tier-box">칼날 등급: <span id="tier-name">T1 칼날</span></div>
-        <div class="blade-box">현재 칼날: <span id="blade-count">3</span>개 (10개 모을 시 진화)</div>
-        <div class="tip-box">💡 상위 티어 칼날 1개를 부수려면 하위 칼날 5개가 필요합니다!</div>
-    </div>
-
-    <div class="leaderboard">
-        <h3>🏆 실시간 랭킹</h3>
-        <div id="rank-list"></div>
-    </div>
-
-    <div id="game-over">
-        <h1>GAME OVER</h1>
-        <p>본체가 공격당해 산산조각 났습니다!</p>
-        <p>최종 점수: <span id="final-score">0</span> | 달성 등급: <span id="final-tier">T1</span></p>
-        <div class="btn-group">
-            <button id="restart-btn" class="btn-ui" onclick="resetGame()">다시 도전하기</button>
-            <a href="../../index.html" id="lobby-btn" class="btn-ui">로비로 나가기</a>
+    <div id="gameover-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">GAME OVER</h2>
+            <p id="modal-desc">최종 생존 랭킹: 5위</p>
+            <div class="btn-group">
+                <button class="btn-action btn-restart" onclick="initGame()">다시 도전</button>
+                <a href="../../index.html" class="btn-action btn-lobby">로비로 이동</a>
+            </div>
         </div>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
-    <div class="seo-text">[서바이벌 블레이드 v3.4] sojang ai Arcade</div>
+    <canvas id="bladeCanvas"></canvas>
 </div>
 
 <script>
-const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('bladeCanvas');
 const ctx = canvas.getContext('2d');
 
 let width, height;
-let score = 0;
-let isGameOver = false;
+let player, ais = [], items = [];
+let targetX = 0, targetY = 0;
 
-const mouse = { x: 0, y: 0 };
-
-function resize() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-    mouse.x = width / 2;
-    mouse.y = height / 2;
-}
-window.addEventListener('resize', resize);
-window.addEventListener('mousemove', (e) => { if(!isGameOver) { mouse.x = e.clientX; mouse.y = e.clientY; } });
-window.addEventListener('touchmove', (e) => {
-    if(!isGameOver && e.touches.length > 0) {
-        mouse.x = e.touches[0].clientX;
-        mouse.y = e.touches[0].clientY;
-    }
-});
-
-function getCornerPosition() {
-    const margin = 50;
-    const corners = [
-        { x: margin, y: margin },
-        { x: width - margin, y: margin },
-        { x: margin, y: height - margin },
-        { x: width - margin, y: height - margin }
-    ];
-    return corners[Math.floor(Math.random() * corners.length)];
-}
-
-function getTierColor(tier) {
-    const colors = ["#ff4757", "#ffa502", "#00d2d3", "#a55eea", "#2ed573", "#ff7f50", "#e84118", "#00a8ff"];
-    return colors[(tier - 1) % colors.length];
-}
-
-class Fighter {
-    constructor(isPlayer, name, color, x, y) {
-        this.isPlayer = isPlayer;
-        this.name = name;
-        this.color = color;
+class Character {
+    constructor(x, y, isPlayer, name) {
         this.x = x;
         this.y = y;
-        this.radius = 20;
-        this.speed = isPlayer ? 0.08 : 1.8;
-        
+        this.radius = 18;
+        this.speed = isPlayer ? 4 : 2.5;
+        this.isPlayer = isPlayer;
+        this.name = name;
+        this.blades = 1;
         this.tier = 1;
-        this.blades = 3;
-        this.currentBladeHp = 1;
-        this.bladeAngle = Math.random() * Math.PI * 2;
-        this.clashCooldown = 0;
-        
-        this.targetX = Math.random() * width;
-        this.targetY = Math.random() * height;
-        this.aiStateTimer = 0;
+        this.angle = 0;
+        this.isDead = false;
     }
 
-    getPower() {
-        return this.tier * 1000 + this.blades * 50;
-    }
-
-    getOrbitDist() {
-        return 45 + (this.tier * 6);
-    }
-
-    getBladeRadius() {
-        return Math.min(6 + (this.tier * 2), 28);
-    }
-
-    addBlade() {
-        this.blades++;
-        if (this.blades >= 10) {
-            this.tier++;
-            this.blades = 1;
-            this.currentBladeHp = 5;
-        }
-    }
-
-    takeBladeDamage(amount) {
-        this.currentBladeHp -= amount;
-        if (this.currentBladeHp <= 0) {
-            this.blades--;
-            if (this.blades > 0) {
-                this.currentBladeHp = (this.tier > 1) ? 5 : 1;
-            } else if (this.tier > 1) {
-                this.tier--;
-                this.blades = 5;
-                this.currentBladeHp = (this.tier > 1) ? 5 : 1;
-            }
-        }
-    }
-
-    getBladePositions() {
-        let positions = [];
-        let orbitDist = this.getOrbitDist();
-        for (let i = 0; i < this.blades; i++) {
-            let angle = this.bladeAngle + (i * (Math.PI * 2 / this.blades));
-            positions.push({
-                x: this.x + Math.cos(angle) * orbitDist,
-                y: this.y + Math.sin(angle) * orbitDist,
-                index: i
-            });
-        }
-        return positions;
-    }
-
-    update(allFighters) {
-        this.bladeAngle += 0.04 + (this.tier * 0.003);
-        if (this.clashCooldown > 0) this.clashCooldown--;
+    update() {
+        if (this.isDead) return;
+        this.angle += 0.04;
 
         if (this.isPlayer) {
-            this.x += (mouse.x - this.x) * this.speed;
-            this.y += (mouse.y - this.y) * this.speed;
-        } else {
-            this.aiStateTimer++;
-            if (this.aiStateTimer > 40) {
-                this.aiStateTimer = 0;
-                let nearestWeak = null;
-                let nearestStrong = null;
-                let minDistWeak = 9999;
-                let minDistStrong = 9999;
-
-                allFighters.forEach(f => {
-                    if (f === this) return;
-                    let d = Math.hypot(f.x - this.x, f.y - this.y);
-                    if (f.getPower() < this.getPower() && d < minDistWeak) {
-                        minDistWeak = d; nearestWeak = f;
-                    } else if (f.getPower() > this.getPower() && d < minDistStrong) {
-                        minDistStrong = d; nearestStrong = f;
-                    }
-                });
-
-                if (nearestStrong && minDistStrong < 220) {
-                    this.targetX = this.x - (nearestStrong.x - this.x);
-                    this.targetY = this.y - (nearestStrong.y - this.y);
-                } else if (nearestWeak && minDistWeak < 300) {
-                    this.targetX = nearestWeak.x;
-                    this.targetY = nearestWeak.y;
-                } else {
-                    this.targetX = Math.random() * (width - 100) + 50;
-                    this.targetY = Math.random() * (height - 100) + 50;
-                }
-            }
-
-            let dx = this.targetX - this.x;
-            let dy = this.targetY - this.y;
+            let dx = targetX - this.x;
+            let dy = targetY - this.y;
             let dist = Math.hypot(dx, dy);
             if (dist > 5) {
                 this.x += (dx / dist) * this.speed;
                 this.y += (dy / dist) * this.speed;
             }
+        } else {
+            // AI 임의 이동
+            this.x += (Math.random() - 0.5) * this.speed * 2;
+            this.y += (Math.random() - 0.5) * this.speed * 2;
         }
 
-        this.x = Math.max(30, Math.min(width - 30, this.x));
-        this.y = Math.max(30, Math.min(height - 30, this.y));
+        // 화면 경계 제한
+        this.x = Math.max(this.radius, Math.min(width - this.radius, this.x));
+        this.y = Math.max(this.radius, Math.min(height - this.radius, this.y));
     }
 
     draw() {
-        let bColor = getTierColor(this.tier);
-        let bRadius = this.getBladeRadius();
-        let bPos = this.getBladePositions();
+        if (this.isDead) return;
 
+        // 본체
+        ctx.fillStyle = this.isPlayer ? '#38bdf8' : '#ef4444';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = this.isPlayer ? 15 : 5;
         ctx.fill();
-        ctx.closePath();
-        ctx.shadowBlur = 0;
 
+        // 이름
         ctx.fillStyle = '#fff';
-        ctx.font = '12px sans-serif';
+        ctx.font = '11px Pretendard';
         ctx.textAlign = 'center';
-        ctx.fillText(`T${this.tier} ${this.name}`, this.x, this.y - this.radius - 10);
+        ctx.fillText(this.name, this.x, this.y - this.radius - 8);
 
-        bPos.forEach(p => {
+        // 회전 칼날
+        const bladeOrbit = 35 + this.tier * 5;
+        for (let i = 0; i < this.blades; i++) {
+            let bAngle = this.angle + (Math.PI * 2 / this.blades) * i;
+            let bx = this.x + Math.cos(bAngle) * bladeOrbit;
+            let by = this.y + Math.sin(bAngle) * bladeOrbit;
+
+            ctx.fillStyle = '#facc15';
             ctx.beginPath();
-            ctx.arc(p.x, p.y, bRadius, 0, Math.PI * 2);
-            ctx.fillStyle = bColor;
-            ctx.shadowColor = bColor;
-            ctx.shadowBlur = 10;
+            ctx.arc(bx, by, 6, 0, Math.PI * 2);
             ctx.fill();
-            ctx.closePath();
-            ctx.shadowBlur = 0;
-        });
+        }
     }
 }
 
-class Item {
-    constructor() {
-        this.x = Math.random() * (width - 60) + 30;
-        this.y = Math.random() * (height - 60) + 30;
-        this.radius = 7;
-    }
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#2ed573';
-        ctx.shadowColor = '#2ed573';
-        ctx.shadowBlur = 8;
-        ctx.fill();
-        ctx.closePath();
-        ctx.shadowBlur = 0;
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    if (player) {
+        targetX = width / 2;
+        targetY = height / 2;
     }
 }
+window.addEventListener('resize', resize);
 
-let player;
-let fighters = [];
-let items = [];
+function handleInput(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    targetX = clientX - rect.left;
+    targetY = clientY - rect.top;
+}
 
-const AI_NAMES = ["칼날마스터", "데스블레이드", "버서커", "소울칼잡이", "기요틴", "소장님라이벌", "블레이드X", "칼날사냥꾼", "다크나이트"];
-const AI_COLORS = ["#70a1ff", "#5352ed", "#ff6b81", "#ff4757", "#2ed573", "#eccc68", "#ff7f50", "#a55eea", "#d2dae2"];
+canvas.addEventListener('mousemove', (e) => handleInput(e.clientX, e.clientY));
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (e.touches.length > 0) handleInput(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: false });
 
-function init() {
+function initGame() {
     resize();
-    score = 0;
-    isGameOver = false;
-    document.getElementById('game-over').style.display = 'none';
+    player = new Character(width / 2, height / 2, true, '나');
+    targetX = width / 2;
+    targetY = height / 2;
 
-    player = new Fighter(true, "소장님(나)", "#00d2d3", width/2, height/2);
-    player.currentBladeHp = 1;
-    fighters = [player];
-
-    for (let i = 0; i < 9; i++) {
-        let spawnPos = getCornerPosition();
-        let ai = new Fighter(
-            false, AI_NAMES[i], AI_COLORS[i],
-            spawnPos.x, spawnPos.y
-        );
-        ai.tier = (i < 3) ? 2 : 1;
-        ai.blades = Math.floor(Math.random() * 4) + 2;
-        ai.currentBladeHp = (ai.tier > 1) ? 5 : 1;
-        fighters.push(ai);
+    ais = [];
+    for (let i = 1; i <= 9; i++) {
+        ais.push(new Character(Math.random() * width, Math.random() * height, false, `AI-${i}`));
     }
 
-    items = [];
-    for(let i = 0; i < 30; i++) items.push(new Item());
+    document.getElementById('gameover-modal').style.display = 'none';
 }
 
-function updateLeaderboard() {
-    let sorted = [...fighters].sort((a,b) => b.getPower() - a.getPower());
-    let listHTML = "";
-    sorted.slice(0, 5).forEach((f, idx) => {
-        let meClass = f.isPlayer ? "rank-me" : "";
-        listHTML += `<div class="rank-item ${meClass}"><span>${idx+1}. ${f.name}</span><span>T${f.tier} (${f.blades})</span></div>`;
-    });
-    document.getElementById('rank-list').innerHTML = listHTML;
-}
-
-function spawnAdaptiveAI() {
-    let spawnPos = getCornerPosition();
-    let newAi = new Fighter(
-        false, 
-        AI_NAMES[Math.floor(Math.random()*AI_NAMES.length)], 
-        AI_COLORS[Math.floor(Math.random()*AI_COLORS.length)], 
-        spawnPos.x, 
-        spawnPos.y
-    );
-    let tierOffset = (Math.random() > 0.6) ? 1 : 0;
-    newAi.tier = Math.max(1, player.tier + tierOffset);
-    newAi.blades = Math.floor(Math.random() * 4) + 2;
-    newAi.currentBladeHp = (newAi.tier > 1) ? 5 : 1;
-    fighters.push(newAi);
-}
-
-function gameOver() {
-    isGameOver = true;
-    document.getElementById('final-score').innerText = score;
-    document.getElementById('final-tier').innerText = `T${player.tier}`;
-    document.getElementById('game-over').style.display = 'flex';
-}
-
-function resetGame() {
-    init();
-}
-
-function animate() {
-    requestAnimationFrame(animate);
+function render() {
     ctx.clearRect(0, 0, width, height);
 
-    if (isGameOver) return;
+    // 격자 배경
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < width; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+    }
+    for (let y = 0; y < height; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
+    }
 
-    items.forEach((item, iIndex) => {
-        item.draw();
-        fighters.forEach(f => {
-            if (Math.hypot(f.x - item.x, f.y - item.y) < f.radius + item.radius) {
-                f.addBlade();
-                if (f.isPlayer) {
-                    score += 25;
-                    updatePlayerUI();
-                }
-                items.splice(iIndex, 1);
-                items.push(new Item());
-            }
-        });
+    player.update();
+    player.draw();
+
+    ais.forEach(ai => {
+        ai.update();
+        ai.draw();
     });
 
-    fighters.forEach(f => f.update(fighters));
-    fighters.forEach(f => f.draw());
-
-    let toRemove = new Set();
-
-    for (let i = 0; i < fighters.length; i++) {
-        for (let j = i + 1; j < fighters.length; j++) {
-            let f1 = fighters[i];
-            let f2 = fighters[j];
-
-            if (toRemove.has(f1) || toRemove.has(f2)) continue;
-
-            let f1Blades = f1.getBladePositions();
-            let f2Blades = f2.getBladePositions();
-            let b1Radius = f1.getBladeRadius();
-            let b2Radius = f2.getBladeRadius();
-
-            let bladeClashed = false;
-            if (f1.clashCooldown === 0 && f2.clashCooldown === 0 && f1.blades > 0 && f2.blades > 0) {
-                for (let b1 of f1Blades) {
-                    for (let b2 of f2Blades) {
-                        let bDist = Math.hypot(b1.x - b2.x, b1.y - b2.y);
-                        if (bDist < b1Radius + b2Radius) {
-                            bladeClashed = true;
-                            
-                            if (f1.tier === f2.tier) {
-                                f1.takeBladeDamage(1);
-                                f2.takeBladeDamage(1);
-                            } else if (f1.tier > f2.tier) {
-                                let tierDiff = f1.tier - f2.tier;
-                                if (tierDiff === 1) {
-                                    f1.takeBladeDamage(1);
-                                    f2.takeBladeDamage(5);
-                                } else {
-                                    f2.takeBladeDamage(5);
-                                }
-                            } else {
-                                let tierDiff = f2.tier - f1.tier;
-                                if (tierDiff === 1) {
-                                    f1.takeBladeDamage(5);
-                                    f2.takeBladeDamage(1);
-                                } else {
-                                    f1.takeBladeDamage(5);
-                                }
-                            }
-
-                            f1.clashCooldown = 12;
-                            f2.clashCooldown = 12;
-                            if (f1.isPlayer || f2.isPlayer) updatePlayerUI();
-                            break;
-                        }
-                    }
-                    if (bladeClashed) break;
-                }
-            }
-
-            if (!bladeClashed) {
-                let dist = Math.hypot(f1.x - f2.x, f1.y - f2.y);
-                if (dist < f1.radius + f2.radius + 10) {
-                    if (f1.getPower() > f2.getPower()) {
-                        toRemove.add(f2);
-                        onFighterKilled(f1, f2);
-                    } else if (f1.getPower() < f2.getPower()) {
-                        toRemove.add(f1);
-                        onFighterKilled(f2, f1);
-                    }
-                }
-            }
-        }
-    }
-
-    if (toRemove.size > 0) {
-        fighters = fighters.filter(f => !toRemove.has(f));
-    }
-
-    updateLeaderboard();
+    requestAnimationFrame(render);
 }
 
-function updatePlayerUI() {
-    document.getElementById('score').innerText = score;
-    document.getElementById('tier-name').innerText = `T${player.tier} 칼날`;
-    document.getElementById('blade-count').innerText = player.blades;
-}
-
-function onFighterKilled(winner, loser) {
-    if (loser.isPlayer) {
-        gameOver();
-    } else {
-        winner.addBlade();
-        if (winner.isPlayer) {
-            score += 200 * loser.tier;
-            updatePlayerUI();
-        }
-        setTimeout(spawnAdaptiveAI, 2500);
-    }
-}
-
-init();
-animate();
+initGame();
+render();
 </script>
 </body>
 </html>
