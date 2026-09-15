@@ -6,28 +6,33 @@
     <title>단일 타워 기지 디펜스 - sojang ai Arcade</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-        body { background: #0f172a; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
-        #game-container { position: relative; width: 100%; height: 100%; background: #0b1329; }
+        body { background: #0b0c10; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
+        #game-container { position: relative; width: 100%; height: 100%; background: #1f2833; }
         
-        .top-nav { position: absolute; top: 10px; right: 10px; z-index: 20; }
-        .home-btn { background: rgba(30, 41, 59, 0.85); color: #38bdf8; border: 1px solid #38bdf8; padding: 5px 10px; border-radius: 14px; font-weight: bold; text-decoration: none; font-size: 11px; }
+        /* 상단 UI 패널 */
+        .top-nav { position: absolute; top: 12px; right: 12px; z-index: 20; }
+        .home-btn { background: rgba(30, 41, 59, 0.85); color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 14px; border-radius: 16px; font-weight: bold; text-decoration: none; font-size: 12px; }
 
-        .header-status { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; z-index: 20; font-size: 11px; font-weight: bold; flex-wrap: wrap; }
-        .stat-card { background: rgba(15, 23, 42, 0.85); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); }
-        .gold-text { color: #facc15; }
-        .hp-text { color: #ef4444; }
+        .header-status { position: absolute; top: 12px; left: 12px; display: flex; gap: 8px; z-index: 20; font-size: 12px; font-weight: bold; flex-wrap: wrap; }
+        .stat-card { background: rgba(0,0,0,0.65); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); text-shadow: 1px 1px 2px #000; }
+        .gold-text { color: #f1c40f; }
+        .wave-text { color: #e74c3c; }
+        .hp-text { color: #2ecc71; }
 
-        .upgrade-bar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 20; max-width: 98%; overflow-x: auto; padding: 2px; }
-        .up-btn { background: #1e293b; color: #f8fafc; border: 1px solid #38bdf8; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.1s; }
-        .up-btn:active { background: #38bdf8; color: #0f172a; }
+        /* 하단 업그레이드 패널 UI (모바일 터치 최적화) */
+        .upgrade-panel { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.2); z-index: 20; max-width: 95%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .up-btn { background: #34495e; color: #fff; border: 1px solid #5d6d7e; border-radius: 10px; padding: 8px 12px; font-size: 12px; cursor: pointer; text-align: center; min-width: 95px; flex-shrink: 0; transition: 0.1s; }
+        .up-btn:active { background: #4a6572; transform: scale(0.95); }
+        .up-btn span { display: block; font-size: 10px; color: #f1c40f; margin-top: 2px; }
 
-        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); flex-direction: column; justify-content: center; align-items: center; z-index: 30; }
-        .modal-content { background: #1e293b; border: 2px solid #ef4444; padding: 20px; border-radius: 16px; text-align: center; max-width: 90%; }
-        .modal h2 { font-size: 22px; color: #ef4444; margin-bottom: 8px; }
-        .modal p { font-size: 13px; color: #e2e8f0; margin-bottom: 16px; }
-        .btn-group { display: flex; gap: 10px; justify-content: center; }
-        .btn-action { padding: 8px 16px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; }
-        .btn-restart { background: #38bdf8; color: #0f172a; }
+        /* 모달 시스템 */
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 30; }
+        .modal-content { background: #1e293b; border: 2px solid #e74c3c; padding: 24px; border-radius: 16px; text-align: center; max-width: 90%; }
+        .modal h2 { font-size: 28px; color: #e74c3c; margin-bottom: 10px; }
+        .modal p { font-size: 16px; color: #e2e8f0; margin-bottom: 20px; }
+        .btn-group { display: flex; gap: 12px; justify-content: center; }
+        .btn-action { padding: 10px 22px; font-size: 14px; font-weight: bold; border: none; border-radius: 20px; cursor: pointer; text-decoration: none; }
+        .btn-restart { background: #2ecc71; color: #fff; }
         .btn-lobby { background: #64748b; color: #fff; }
 
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
@@ -37,57 +42,69 @@
 
 <div id="game-container">
     <div class="header-status">
-        <div class="stat-card">🪙 골드: <span id="gold-val" class="gold-text">100</span></div>
-        <div class="stat-card">❤️ HP: <span id="hp-val" class="hp-text">100/100</span></div>
-        <div class="stat-card">🌊 웨이브: <span id="wave-val" style="color:#38bdf8;">1</span></div>
+        <div class="stat-card">💰 골드: <span id="gold" class="gold-text">100</span></div>
+        <div class="stat-card">🌊 웨이브: <span id="wave" class="wave-text">1</span></div>
+        <div class="stat-card">❤️ 체력: <span id="hp" class="hp-text">100 / 100</span></div>
     </div>
 
     <div class="top-nav">
         <a href="../../index.html" class="home-btn">🏠 로비</a>
     </div>
 
-    <div class="upgrade-bar">
-        <button class="up-btn" onclick="upgrade('atk')">⚔️ 공(+5) [50G]</button>
-        <button class="up-btn" onclick="upgrade('speed')">⚡ 공속 (+10%) [60G]</button>
-        <button class="up-btn" onclick="upgrade('range')">🎯 사거리 (+20) [40G]</button>
-        <button class="up-btn" onclick="upgrade('repair')">🛠️ 수리 (+30) [30G]</button>
+    <div class="upgrade-panel">
+        <button class="up-btn" onclick="upgrade('damage')">⚔️ 공격력 (Lv.<span id="lvl-damage">1</span>)<span id="cost-damage">50G</span></button>
+        <button class="up-btn" onclick="upgrade('speed')">⚡ 공속 (Lv.<span id="lvl-speed">1</span>)<span id="cost-speed">75G</span></button>
+        <button class="up-btn" onclick="upgrade('range')">🎯 사거리 (Lv.<span id="lvl-range">1</span>)<span id="cost-range">60G</span></button>
+        <button class="up-btn" onclick="upgrade('multi')">🏹 멀티샷 (Lv.<span id="lvl-multi">1</span>)<span id="cost-multi">150G</span></button>
+        <button class="up-btn" onclick="upgrade('repair')">🔧 수리 (+40)<span>50G</span></button>
     </div>
 
-    <div id="gameover-modal" class="modal">
+    <div id="game-over" class="modal">
         <div class="modal-content">
-            <h2>기지 파괴됨!</h2>
-            <p id="gameover-desc">최종 기록: 웨이브 1</p>
+            <h2>기지 함락!</h2>
+            <p>최종 방어 웨이브: <span id="final-wave" style="color:#f1c40f; font-weight:bold;">1</span></p>
             <div class="btn-group">
-                <button class="btn-action btn-restart" onclick="initGame()">다시 도전</button>
+                <button class="btn-action btn-restart" onclick="resetGame()">다시 시작</button>
                 <a href="../../index.html" class="btn-action btn-lobby">로비로 이동</a>
             </div>
         </div>
     </div>
 
-    <canvas id="defenseCanvas"></canvas>
+    <canvas id="gameCanvas"></canvas>
 </div>
 
 <script>
-const canvas = document.getElementById('defenseCanvas');
+const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let width, height;
-let scaleRatio = 1; // 화면 크기에 비례하는 동적 스케일 값
-let gold = 100, hp = 100, maxHp = 100, wave = 1;
-let killCount = 0;
+let width, height, scaleRatio = 1;
+let gold = 100;
+let wave = 1;
+let isGameOver = false;
 
-let tower = { x: 0, y: 0, baseRadius: 24, baseRange: 120, range: 120, atk: 15, cooldown: 0, maxCooldown: 25 };
+const tower = {
+    x: 0, y: 0, baseRadius: 26, baseRange: 160, range: 160,
+    hp: 100, maxHp: 100,
+    damage: 15,
+    attackSpeed: 1,
+    targets: 1,
+    cooldown: 0,
+    levels: { damage: 1, speed: 1, range: 1, multi: 1 },
+    costs: { damage: 50, speed: 75, range: 60, multi: 150 }
+};
+
 let enemies = [];
 let bullets = [];
-let spawnIntervalTimer = null;
-let isGameOver = false;
+let particles = [];
+let waveTimer = 0;
+let enemiesToSpawn = 10;
+let spawnedCount = 0;
 
 function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
-
-    // 기기 화면 해상도에 맞춰 모든 요소의 크기를 유연하게 비례 계산 (기준 800x600)
     scaleRatio = Math.min(width / 800, height / 600);
+    if (scaleRatio < 0.7) scaleRatio = 0.7;
 
     tower.x = width / 2;
     tower.y = height / 2;
@@ -97,193 +114,255 @@ window.addEventListener('resize', resize);
 
 class Enemy {
     constructor() {
-        let angle = Math.random() * Math.PI * 2;
-        let dist = Math.max(width, height) / 2 + 50;
-        this.x = tower.x + Math.cos(angle) * dist;
-        this.y = tower.y + Math.sin(angle) * dist;
-        this.baseRadius = 9;
-        this.hp = 20 + (wave - 1) * 8;
-        this.maxHp = this.hp;
+        let side = Math.floor(Math.random() * 4);
+        if (side === 0) { this.x = Math.random() * width; this.y = -30; }
+        else if (side === 1) { this.x = width + 30; this.y = Math.random() * height; }
+        else if (side === 2) { this.x = Math.random() * width; this.y = height + 30; }
+        else { this.x = -30; this.y = Math.random() * height; }
+
+        let hpBonus = (wave - 1) * 15;
+        this.maxHp = 30 + hpBonus;
+        this.hp = this.maxHp;
         this.speed = (1.2 + Math.random() * 0.4) * scaleRatio;
+        this.baseRadius = 11;
+        this.reward = 10 + wave * 2;
     }
 
     update() {
-        let dx = tower.x - this.x;
-        let dy = tower.y - this.y;
-        let dist = Math.hypot(dx, dy);
-
-        let hitRadius = (tower.baseRadius + this.baseRadius) * scaleRatio;
-
-        if (dist < hitRadius) {
-            hp -= 10;
-            updateUI();
-            if (hp <= 0) gameOver();
-            return true;
-        }
-
-        this.x += (dx / dist) * this.speed;
-        this.y += (dy / dist) * this.speed;
-        return false;
+        let angle = Math.atan2(tower.y - this.y, tower.x - this.x);
+        this.x += Math.cos(angle) * this.speed;
+        this.y += Math.sin(angle) * this.speed;
     }
 
     draw() {
         const radius = this.baseRadius * scaleRatio;
-        ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = '#e74c3c';
         ctx.fill();
+        ctx.closePath();
 
-        // 적 체력바 크기 비례 적용
-        const barW = 18 * scaleRatio;
-        const barH = 3 * scaleRatio;
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(this.x - barW / 2, this.y - radius - 5 * scaleRatio, barW, barH);
-        ctx.fillStyle = '#22c55e';
-        ctx.fillRect(this.x - barW / 2, this.y - radius - 5 * scaleRatio, barW * (this.hp / this.maxHp), barH);
+        // 적 HP 바 선명하게 복원
+        const barW = 22 * scaleRatio;
+        const barH = 4 * scaleRatio;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(this.x - barW / 2, this.y - radius - 6 * scaleRatio, barW, barH);
+        ctx.fillStyle = '#2ecc71';
+        ctx.fillRect(this.x - barW / 2, this.y - radius - 6 * scaleRatio, (Math.max(0, this.hp) / this.maxHp) * barW, barH);
     }
 }
 
 class Bullet {
-    constructor(target) {
-        this.x = tower.x;
-        this.y = tower.y;
-        this.target = target;
+    constructor(startX, startY, targetEnemy, damage) {
+        this.x = startX;
+        this.y = startY;
+        this.target = targetEnemy;
+        this.damage = damage;
         this.speed = 9 * scaleRatio;
-        this.baseRadius = 4.5;
+        this.baseRadius = 4;
     }
 
     update() {
-        if (!enemies.includes(this.target)) return true;
+        if (!this.target || this.target.hp <= 0) return true;
 
-        let dx = this.target.x - this.x;
-        let dy = this.target.y - this.y;
-        let dist = Math.hypot(dx, dy);
+        let angle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
+        this.x += Math.cos(angle) * this.speed;
+        this.y += Math.sin(angle) * this.speed;
 
-        if (dist < 10 * scaleRatio) {
-            this.target.hp -= tower.atk;
-            if (this.target.hp <= 0) {
-                gold += 12;
-                killCount++;
-                if (killCount % 10 === 0) wave++;
-                enemies = enemies.filter(e => e !== this.target);
-                updateUI();
-            }
+        let dist = Math.hypot(this.target.x - this.x, this.target.y - this.y);
+        if (dist < (this.target.baseRadius * scaleRatio) + (this.baseRadius * scaleRatio)) {
+            this.target.hp -= this.damage;
+            createParticles(this.x, this.y, '#f1c40f');
             return true;
         }
-
-        this.x += (dx / dist) * this.speed;
-        this.y += (dy / dist) * this.speed;
         return false;
     }
 
     draw() {
-        ctx.fillStyle = '#facc15';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.baseRadius * scaleRatio, 0, Math.PI * 2);
+        ctx.fillStyle = '#f1c40f';
         ctx.fill();
+        ctx.closePath();
     }
 }
 
-function spawnEnemy() {
-    if (isGameOver) return;
-    enemies.push(new Enemy());
+class Particle {
+    constructor(x, y, color) {
+        this.x = x; this.y = y;
+        this.color = color;
+        this.vx = (Math.random() - 0.5) * 5 * scaleRatio;
+        this.vy = (Math.random() - 0.5) * 5 * scaleRatio;
+        this.alpha = 1;
+    }
+    update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.05; }
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2.5 * scaleRatio, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+function createParticles(x, y, color) {
+    for(let i=0; i<6; i++) particles.push(new Particle(x, y, color));
+}
+
+function init() {
+    resize();
+    gold = 100;
+    wave = 1;
+    isGameOver = false;
+    tower.hp = 100; tower.maxHp = 100;
+    tower.damage = 15; tower.attackSpeed = 1; tower.baseRange = 160; tower.range = 160 * scaleRatio; tower.targets = 1;
+    tower.levels = { damage: 1, speed: 1, range: 1, multi: 1 };
+    tower.costs = { damage: 50, speed: 75, range: 60, multi: 150 };
+
+    enemies = []; bullets = []; particles = [];
+    spawnedCount = 0; enemiesToSpawn = 10;
+    
+    document.getElementById('game-over').style.display = 'none';
+    updateUI();
 }
 
 function upgrade(type) {
     if (isGameOver) return;
-    if (type === 'atk' && gold >= 50) { gold -= 50; tower.atk += 5; }
-    else if (type === 'speed' && gold >= 60 && tower.maxCooldown > 8) { gold -= 60; tower.maxCooldown = Math.max(6, tower.maxCooldown - 3); }
-    else if (type === 'range' && gold >= 40) { gold -= 40; tower.baseRange += 20; tower.range = tower.baseRange * scaleRatio; }
-    else if (type === 'repair' && gold >= 30 && hp < maxHp) { gold -= 30; hp = Math.min(maxHp, hp + 30); }
+
+    if (type === 'repair') {
+        if (gold >= 50 && tower.hp < tower.maxHp) {
+            gold -= 50;
+            tower.hp = Math.min(tower.maxHp, tower.hp + 40);
+        }
+    } else if (gold >= tower.costs[type]) {
+        gold -= tower.costs[type];
+        tower.levels[type]++;
+        
+        if (type === 'damage') tower.damage += 10;
+        if (type === 'speed') tower.attackSpeed += 0.3;
+        if (type === 'range') { tower.baseRange += 30; tower.range = tower.baseRange * scaleRatio; }
+        if (type === 'multi') tower.targets += 1;
+
+        tower.costs[type] = Math.floor(tower.costs[type] * 1.5);
+    }
     updateUI();
 }
 
 function updateUI() {
-    document.getElementById('gold-val').innerText = gold;
-    document.getElementById('hp-val').innerText = `${Math.max(0, hp)}/${maxHp}`;
-    document.getElementById('wave-val').innerText = wave;
+    document.getElementById('gold').innerText = gold;
+    document.getElementById('wave').innerText = wave;
+    document.getElementById('hp').innerText = `${Math.ceil(tower.hp)} / ${tower.maxHp}`;
+    
+    ['damage', 'speed', 'range', 'multi'].forEach(type => {
+        document.getElementById(`lvl-${type}`).innerText = tower.levels[type];
+        document.getElementById(`cost-${type}`).innerText = `${tower.costs[type]}G`;
+    });
 }
 
 function gameOver() {
     isGameOver = true;
-    clearInterval(spawnIntervalTimer);
-    document.getElementById('gameover-desc').innerText = `최종 기록: 웨이브 ${wave} (처치: ${killCount} 마리)`;
-    document.getElementById('gameover-modal').style.display = 'flex';
+    document.getElementById('final-wave').innerText = wave;
+    document.getElementById('game-over').style.display = 'flex';
 }
 
-function initGame() {
-    resize();
-    gold = 100;
-    hp = 100;
-    maxHp = 100;
-    wave = 1;
-    killCount = 0;
-    isGameOver = false;
+function resetGame() { init(); }
 
-    tower.baseRange = 120;
-    tower.range = tower.baseRange * scaleRatio;
-    tower.atk = 15;
-    tower.maxCooldown = 25;
-    tower.cooldown = 0;
-
-    enemies = [];
-    bullets = [];
-
-    document.getElementById('gameover-modal').style.display = 'none';
-    updateUI();
-
-    if (spawnIntervalTimer) clearInterval(spawnIntervalTimer);
-    spawnIntervalTimer = setInterval(spawnEnemy, 1200);
-}
-
-function render() {
+function animate() {
+    requestAnimationFrame(animate);
     ctx.clearRect(0, 0, width, height);
 
-    // 1. 사거리 링 (비율 반영)
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
-    ctx.lineWidth = 2 * scaleRatio;
-    ctx.beginPath();
-    ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
-    ctx.stroke();
+    if (isGameOver) return;
 
-    // 2. 메인 중앙 기지 (화면 크기에 맞춰 동적 축소/확대)
-    const towerRadius = tower.baseRadius * scaleRatio;
-    ctx.fillStyle = '#0284c7';
-    ctx.beginPath();
-    ctx.arc(tower.x, tower.y, towerRadius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 3 * scaleRatio;
-    ctx.stroke();
-
-    if (!isGameOver) {
-        tower.cooldown--;
-        if (tower.cooldown <= 0 && enemies.length > 0) {
-            let target = enemies.find(e => Math.hypot(e.x - tower.x, e.y - tower.y) <= tower.range);
-            if (target) {
-                bullets.push(new Bullet(target));
-                tower.cooldown = tower.maxCooldown;
-            }
-        }
-
-        bullets = bullets.filter(b => {
-            let removed = b.update();
-            if (!removed) b.draw();
-            return !removed;
-        });
-
-        enemies = enemies.filter(e => {
-            let removed = e.update();
-            if (!removed) e.draw();
-            return !removed;
-        });
+    // 1. 적 스폰 및 웨이브 진행 제어 복원
+    waveTimer++;
+    if (waveTimer % 50 === 0 && spawnedCount < enemiesToSpawn) {
+        enemies.push(new Enemy());
+        spawnedCount++;
     }
 
-    requestAnimationFrame(render);
+    if (spawnedCount >= enemiesToSpawn && enemies.length === 0) {
+        wave++;
+        spawnedCount = 0;
+        enemiesToSpawn = 10 + wave * 3;
+        gold += 50 + wave * 10; // 웨이브 보상
+        updateUI();
+    }
+
+    // 2. 멀티샷 및 거리 기반 타겟팅 복원
+    tower.cooldown += 1 / 60;
+    if (tower.cooldown >= (1 / tower.attackSpeed)) {
+        let inRangeEnemies = enemies
+            .map(e => ({ enemy: e, dist: Math.hypot(e.x - tower.x, e.y - tower.y) }))
+            .filter(item => item.dist <= tower.range)
+            .sort((a, b) => a.dist - b.dist);
+
+        if (inRangeEnemies.length > 0) {
+            let fireCount = Math.min(tower.targets, inRangeEnemies.length);
+            for (let i = 0; i < fireCount; i++) {
+                bullets.push(new Bullet(tower.x, tower.y, inRangeEnemies[i].enemy, tower.damage));
+            }
+            tower.cooldown = 0;
+        }
+    }
+
+    // 3. 파티클 이펙트
+    particles.forEach((p, idx) => {
+        p.update(); p.draw();
+        if (p.alpha <= 0) particles.splice(idx, 1);
+    });
+
+    // 탄환
+    bullets = bullets.filter(b => {
+        let hit = b.update();
+        if (!hit) b.draw();
+        return !hit;
+    });
+
+    // 적 개체 및 충돌 처리
+    enemies.forEach((e, idx) => {
+        e.update();
+        e.draw();
+
+        // 기지 충돌 감지
+        if (Math.hypot(e.x - tower.x, e.y - tower.y) < (tower.baseRadius * scaleRatio) + (e.baseRadius * scaleRatio)) {
+            tower.hp -= 10;
+            createParticles(e.x, e.y, '#e74c3c');
+            enemies.splice(idx, 1);
+            updateUI();
+
+            if (tower.hp <= 0) gameOver();
+        }
+
+        // 처치 시 골드 및 파티클
+        if (e.hp <= 0) {
+            gold += e.reward;
+            createParticles(e.x, e.y, '#2ecc71');
+            enemies.splice(idx, 1);
+            updateUI();
+        }
+    });
+
+    // 4. 중앙 기지 렌더링
+    ctx.beginPath();
+    ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.lineWidth = 2 * scaleRatio;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(tower.x, tower.y, tower.baseRadius * scaleRatio, 0, Math.PI * 2);
+    ctx.fillStyle = '#6c5ce7';
+    ctx.shadowColor = '#a29bfe';
+    ctx.shadowBlur = 15 * scaleRatio;
+    ctx.fill();
+    ctx.closePath();
+    ctx.shadowBlur = 0;
 }
 
-initGame();
-render();
+init();
+animate();
 </script>
 </body>
 </html>
