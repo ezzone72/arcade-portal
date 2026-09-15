@@ -3,197 +3,398 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>서바이벌 블레이드 - sojang ai Arcade</title>
+    <title>서바이벌 블레이드 v3.4 - sojang ai Arcade</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-        body { background: #0f172a; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
-        #game-container { position: relative; width: 100%; height: 100%; }
+        body { background: #08080c; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
+        #game-container { position: relative; width: 100%; height: 100%; background: #0f0f18; }
         
-        .top-nav { position: absolute; top: 10px; right: 10px; z-index: 20; }
-        .home-btn { background: rgba(30, 41, 59, 0.85); color: #38bdf8; border: 1px solid #38bdf8; padding: 5px 10px; border-radius: 14px; font-weight: bold; text-decoration: none; font-size: 11px; }
+        /* 상단 UI 패널 */
+        .top-nav { position: absolute; top: 12px; right: 12px; z-index: 20; }
+        .home-btn { background: rgba(30, 41, 59, 0.85); color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 14px; border-radius: 16px; font-weight: bold; text-decoration: none; font-size: 12px; }
 
-        .header-status { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; z-index: 20; font-size: 11px; font-weight: bold; }
-        .stat-card { background: rgba(15, 23, 42, 0.85); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); }
-        .score-text { color: #facc15; }
+        .ui-panel { position: absolute; top: 12px; left: 12px; z-index: 20; font-size: 13px; font-weight: bold; }
+        .stat-card { background: rgba(0,0,0,0.7); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); margin-bottom: 4px; display: inline-block; }
+        .score-box { color: #00ffcc; }
+        .tier-box { color: #ffcc00; }
+        .blade-box { color: #ff4757; }
+
+        /* 실시간 랭킹 보드 (모바일 호환) */
+        .leaderboard { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.75); padding: 10px 14px; border-radius: 10px; font-size: 11px; border: 1px solid rgba(255,255,255,0.15); min-width: 150px; z-index: 20; }
+        .leaderboard h3 { color: #ffcc00; margin-bottom: 6px; border-bottom: 1px solid #444; padding-bottom: 2px; text-align: center; }
+        .rank-item { margin-bottom: 3px; display: flex; justify-content: space-between; gap: 10px; }
+        .rank-me { color: #00ffcc; font-weight: bold; }
+
+        /* 모달 시스템 */
+        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 30; }
+        .modal-content { background: #1e293b; border: 2px solid #ff4757; padding: 24px; border-radius: 16px; text-align: center; max-width: 90%; }
+        .modal h2 { font-size: 28px; color: #ff4757; margin-bottom: 10px; }
+        .modal p { font-size: 15px; color: #e2e8f0; margin-bottom: 20px; }
+        .btn-group { display: flex; gap: 12px; justify-content: center; }
+        .btn-action { padding: 10px 22px; font-size: 14px; font-weight: bold; border: none; border-radius: 20px; cursor: pointer; text-decoration: none; }
+        .btn-restart { background: #2ed573; color: #fff; }
+        .btn-lobby { background: #64748b; color: #fff; }
 
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-
-        .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); flex-direction: column; justify-content: center; align-items: center; z-index: 30; }
-        .modal-content { background: #1e293b; border: 2px solid #38bdf8; padding: 20px; border-radius: 16px; text-align: center; max-width: 90%; }
-        .modal h2 { font-size: 22px; color: #ef4444; margin-bottom: 8px; }
-        .modal p { font-size: 13px; color: #e2e8f0; margin-bottom: 16px; }
-        .btn-group { display: flex; gap: 10px; justify-content: center; }
-        .btn-action { padding: 8px 16px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; }
-        .btn-restart { background: #38bdf8; color: #0f172a; }
-        .btn-lobby { background: #64748b; color: #fff; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div class="header-status">
-        <div class="stat-card">⚔️ 블레이드: <span id="blade-count" class="score-text">1개 (T1)</span></div>
-        <div class="stat-card">🏆 생존: <span id="alive-count" class="score-text">10명</span></div>
+    <div class="ui-panel">
+        <div class="stat-card score-box">점수: <span id="score">0</span></div><br>
+        <div class="stat-card tier-box">등급: <span id="tier-name">T1 칼날</span></div><br>
+        <div class="stat-card blade-box">칼날: <span id="blade-count">3</span>개 (10개 시 진화)</div>
     </div>
 
     <div class="top-nav">
         <a href="../../index.html" class="home-btn">🏠 로비</a>
     </div>
 
-    <div id="gameover-modal" class="modal">
+    <div class="leaderboard">
+        <h3>🏆 실시간 랭킹</h3>
+        <div id="rank-list"></div>
+    </div>
+
+    <div id="game-over" class="modal">
         <div class="modal-content">
-            <h2 id="modal-title">GAME OVER</h2>
-            <p id="modal-desc">최종 생존 랭킹: 5위</p>
+            <h2>GAME OVER</h2>
+            <p>본체가 공격당해 산산조각 났습니다!</p>
+            <p>최종 점수: <span id="final-score" style="color:#00ffcc; font-weight:bold;">0</span> | 달성 등급: <span id="final-tier" style="color:#ffcc00; font-weight:bold;">T1</span></p>
             <div class="btn-group">
-                <button class="btn-action btn-restart" onclick="initGame()">다시 도전</button>
+                <button class="btn-action btn-restart" onclick="resetGame()">다시 도전</button>
                 <a href="../../index.html" class="btn-action btn-lobby">로비로 이동</a>
             </div>
         </div>
     </div>
 
-    <canvas id="bladeCanvas"></canvas>
+    <canvas id="gameCanvas"></canvas>
 </div>
 
 <script>
-const canvas = document.getElementById('bladeCanvas');
+const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let width, height;
-let scaleRatio = 1;
-let player, ais = [], items = [];
-let targetX = 0, targetY = 0;
+let width, height, scaleRatio = 1;
+let score = 0;
+let isGameOver = false;
 
-class Character {
-    constructor(x, y, isPlayer, name) {
-        this.x = x;
-        this.y = y;
-        this.baseRadius = 16;
-        this.baseSpeed = isPlayer ? 4.5 : 2.8;
-        this.isPlayer = isPlayer;
-        this.name = name;
-        this.blades = 1;
-        this.tier = 1;
-        this.angle = Math.random() * Math.PI * 2;
-        this.isDead = false;
-    }
-
-    update() {
-        if (this.isDead) return;
-        this.angle += 0.05;
-
-        const currentSpeed = this.baseSpeed * scaleRatio;
-        const currentRadius = this.baseRadius * scaleRatio;
-
-        if (this.isPlayer) {
-            let dx = targetX - this.x;
-            let dy = targetY - this.y;
-            let dist = Math.hypot(dx, dy);
-            if (dist > 5 * scaleRatio) {
-                this.x += (dx / dist) * currentSpeed;
-                this.y += (dy / dist) * currentSpeed;
-            }
-        } else {
-            this.x += (Math.random() - 0.5) * currentSpeed * 1.5;
-            this.y += (Math.random() - 0.5) * currentSpeed * 1.5;
-        }
-
-        this.x = Math.max(currentRadius, Math.min(width - currentRadius, this.x));
-        this.y = Math.max(currentRadius, Math.min(height - currentRadius, this.y));
-    }
-
-    draw() {
-        if (this.isDead) return;
-
-        const radius = this.baseRadius * scaleRatio;
-
-        // 플레이어/AI 본체
-        ctx.fillStyle = this.isPlayer ? '#38bdf8' : '#ef4444';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2 * scaleRatio;
-        ctx.stroke();
-
-        // 이름 표기
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.max(10, 11 * scaleRatio)}px Pretendard`;
-        ctx.textAlign = 'center';
-        ctx.fillText(this.name, this.x, this.y - radius - 6 * scaleRatio);
-
-        // 회전 칼날 (스케일 적용)
-        const bladeOrbit = (30 + this.tier * 4) * scaleRatio;
-        const bladeRadius = 5.5 * scaleRatio;
-
-        for (let i = 0; i < this.blades; i++) {
-            let bAngle = this.angle + (Math.PI * 2 / this.blades) * i;
-            let bx = this.x + Math.cos(bAngle) * bladeOrbit;
-            let by = this.y + Math.sin(bAngle) * bladeOrbit;
-
-            ctx.fillStyle = '#facc15';
-            ctx.beginPath();
-            ctx.arc(bx, by, bladeRadius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#eab308';
-            ctx.lineWidth = 1.5 * scaleRatio;
-            ctx.stroke();
-        }
-    }
-}
+const mouse = { x: 0, y: 0 };
 
 function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
     scaleRatio = Math.min(width / 800, height / 600);
-    if (scaleRatio < 0.7) scaleRatio = 0.7;
+    if (scaleRatio < 0.65) scaleRatio = 0.65;
 
-    if (player) {
-        targetX = player.x;
-        targetY = player.y;
+    if (player && (mouse.x === 0 && mouse.y === 0)) {
+        mouse.x = width / 2;
+        mouse.y = height / 2;
     }
 }
 window.addEventListener('resize', resize);
 
-function handleInput(clientX, clientY) {
-    const rect = canvas.getBoundingClientRect();
-    targetX = clientX - rect.left;
-    targetY = clientY - rect.top;
+function handleInput(x, y) {
+    if (!isGameOver) {
+        mouse.x = x;
+        mouse.y = y;
+    }
 }
-
-canvas.addEventListener('mousemove', (e) => handleInput(e.clientX, e.clientY));
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
+window.addEventListener('mousemove', (e) => handleInput(e.clientX, e.clientY));
+window.addEventListener('touchmove', (e) => {
     if (e.touches.length > 0) handleInput(e.touches[0].clientX, e.touches[0].clientY);
-}, { passive: false });
+}, { passive: true });
+window.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) handleInput(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: true });
 
-function updateUI() {
-    if (player) {
-        document.getElementById('blade-count').innerText = `${player.blades}개 (T${player.tier})`;
-    }
-    const aliveCount = (player && !player.isDead ? 1 : 0) + ais.filter(a => !a.isDead).length;
-    document.getElementById('alive-count').innerText = `${aliveCount}명`;
+function getCornerPosition() {
+    const margin = 40 * scaleRatio;
+    const corners = [
+        { x: margin, y: margin },
+        { x: width - margin, y: margin },
+        { x: margin, y: height - margin },
+        { x: width - margin, y: height - margin }
+    ];
+    return corners[Math.floor(Math.random() * corners.length)];
 }
 
-function initGame() {
+function getTierColor(tier) {
+    const colors = ["#ff4757", "#ffa502", "#00d2d3", "#a55eea", "#2ed573", "#ff7f50", "#e84118", "#00a8ff"];
+    return colors[(tier - 1) % colors.length];
+}
+
+class Fighter {
+    constructor(isPlayer, name, color, x, y) {
+        this.isPlayer = isPlayer;
+        this.name = name;
+        this.color = color;
+        this.x = x;
+        this.y = y;
+        this.baseRadius = 16;
+        this.tier = 1;
+        this.blades = 3;
+        this.currentBladeHp = 1;
+        this.bladeAngle = Math.random() * Math.PI * 2;
+        this.clashCooldown = 0;
+        
+        this.targetX = Math.random() * width;
+        this.targetY = Math.random() * height;
+        this.aiStateTimer = 0;
+    }
+
+    getPower() {
+        return this.tier * 1000 + this.blades * 50;
+    }
+
+    getOrbitDist() {
+        return (35 + (this.tier * 5)) * scaleRatio;
+    }
+
+    getBladeRadius() {
+        return Math.min(5 + (this.tier * 1.5), 20) * scaleRatio;
+    }
+
+    addBlade() {
+        this.blades++;
+        if (this.blades >= 10) {
+            this.tier++;
+            this.blades = 1;
+            this.currentBladeHp = 5;
+        }
+    }
+
+    takeBladeDamage(amount) {
+        this.currentBladeHp -= amount;
+        if (this.currentBladeHp <= 0) {
+            this.blades--;
+            if (this.blades > 0) {
+                this.currentBladeHp = (this.tier > 1) ? 5 : 1;
+            } else if (this.tier > 1) {
+                this.tier--;
+                this.blades = 5;
+                this.currentBladeHp = (this.tier > 1) ? 5 : 1;
+            }
+        }
+    }
+
+    getBladePositions() {
+        let positions = [];
+        let orbitDist = this.getOrbitDist();
+        for (let i = 0; i < this.blades; i++) {
+            let angle = this.bladeAngle + (i * (Math.PI * 2 / this.blades));
+            positions.push({
+                x: this.x + Math.cos(angle) * orbitDist,
+                y: this.y + Math.sin(angle) * orbitDist
+            });
+        }
+        return positions;
+    }
+
+    update(allFighters) {
+        this.bladeAngle += 0.04 + (this.tier * 0.003);
+        if (this.clashCooldown > 0) this.clashCooldown--;
+
+        const speed = (this.isPlayer ? 4.5 : 2.2) * scaleRatio;
+
+        if (this.isPlayer) {
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 5 * scaleRatio) {
+                this.x += (dx / dist) * speed;
+                this.y += (dy / dist) * speed;
+            }
+        } else {
+            this.aiStateTimer++;
+            if (this.aiStateTimer > 35) {
+                this.aiStateTimer = 0;
+                let nearestWeak = null, nearestStrong = null;
+                let minDistWeak = 9999, minDistStrong = 9999;
+
+                allFighters.forEach(f => {
+                    if (f === this) return;
+                    let d = Math.hypot(f.x - this.x, f.y - this.y);
+                    if (f.getPower() < this.getPower() && d < minDistWeak) {
+                        minDistWeak = d; nearestWeak = f;
+                    } else if (f.getPower() > this.getPower() && d < minDistStrong) {
+                        minDistStrong = d; nearestStrong = f;
+                    }
+                });
+
+                if (nearestStrong && minDistStrong < 200 * scaleRatio) {
+                    this.targetX = this.x - (nearestStrong.x - this.x);
+                    this.targetY = this.y - (nearestStrong.y - this.y);
+                } else if (nearestWeak && minDistWeak < 280 * scaleRatio) {
+                    this.targetX = nearestWeak.x;
+                    this.targetY = nearestWeak.y;
+                } else {
+                    this.targetX = Math.random() * (width - 80) + 40;
+                    this.targetY = Math.random() * (height - 80) + 40;
+                }
+            }
+
+            let dx = this.targetX - this.x;
+            let dy = this.targetY - this.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 5 * scaleRatio) {
+                this.x += (dx / dist) * speed;
+                this.y += (dy / dist) * speed;
+            }
+        }
+
+        const radius = this.baseRadius * scaleRatio;
+        this.x = Math.max(radius, Math.min(width - radius, this.x));
+        this.y = Math.max(radius, Math.min(height - radius, this.y));
+    }
+
+    draw() {
+        let bColor = getTierColor(this.tier);
+        let bRadius = this.getBladeRadius();
+        let bPos = this.getBladePositions();
+        let radius = this.baseRadius * scaleRatio;
+
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = this.isPlayer ? 12 : 4;
+        ctx.fill();
+        ctx.closePath();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.max(10, 11 * scaleRatio)}px Pretendard`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`T${this.tier} ${this.name}`, this.x, this.y - radius - 6 * scaleRatio);
+
+        bPos.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, bRadius, 0, Math.PI * 2);
+            ctx.fillStyle = bColor;
+            ctx.shadowColor = bColor;
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.closePath();
+            ctx.shadowBlur = 0;
+        });
+    }
+}
+
+class Item {
+    constructor() {
+        this.x = Math.random() * (width - 60) + 30;
+        this.y = Math.random() * (height - 60) + 30;
+        this.baseRadius = 5.5;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.baseRadius * scaleRatio, 0, Math.PI * 2);
+        ctx.fillStyle = '#2ed573';
+        ctx.shadowColor = '#2ed573';
+        ctx.shadowBlur = 6;
+        ctx.fill();
+        ctx.closePath();
+        ctx.shadowBlur = 0;
+    }
+}
+
+let player;
+let fighters = [];
+let items = [];
+
+const AI_NAMES = ["마스터", "데스블레이드", "버서커", "소울칼잡이", "기요틴", "라이벌", "블레이드X", "사냥꾼", "다크나이트"];
+const AI_COLORS = ["#70a1ff", "#5352ed", "#ff6b81", "#ff4757", "#2ed573", "#eccc68", "#ff7f50", "#a55eea", "#d2dae2"];
+
+function init() {
     resize();
-    player = new Character(width / 2, height / 2, true, '나');
-    targetX = width / 2;
-    targetY = height / 2;
+    score = 0;
+    isGameOver = false;
+    document.getElementById('game-over').style.display = 'none';
 
-    ais = [];
-    for (let i = 1; i <= 9; i++) {
-        ais.push(new Character(Math.random() * (width - 40) + 20, Math.random() * (height - 40) + 20, false, `AI-${i}`));
+    player = new Fighter(true, "나", "#00d2d3", width / 2, height / 2);
+    player.currentBladeHp = 1;
+    fighters = [player];
+
+    for (let i = 0; i < 8; i++) {
+        let spawnPos = getCornerPosition();
+        let ai = new Fighter(
+            false, AI_NAMES[i % AI_NAMES.length], AI_COLORS[i % AI_COLORS.length],
+            spawnPos.x, spawnPos.y
+        );
+        ai.tier = (i < 2) ? 2 : 1;
+        ai.blades = Math.floor(Math.random() * 4) + 2;
+        ai.currentBladeHp = (ai.tier > 1) ? 5 : 1;
+        fighters.push(ai);
     }
 
-    document.getElementById('gameover-modal').style.display = 'none';
-    updateUI();
+    items = [];
+    for (let i = 0; i < 25; i++) items.push(new Item());
+    updatePlayerUI();
 }
 
-function render() {
+function updateLeaderboard() {
+    let sorted = [...fighters].sort((a,b) => b.getPower() - a.getPower());
+    let listHTML = "";
+    sorted.slice(0, 5).forEach((f, idx) => {
+        let meClass = f.isPlayer ? "rank-me" : "";
+        listHTML += `<div class="rank-item ${meClass}"><span>${idx+1}. ${f.name}</span><span>T${f.tier} (${f.blades})</span></div>`;
+    });
+    document.getElementById('rank-list').innerHTML = listHTML;
+}
+
+function spawnAdaptiveAI() {
+    let spawnPos = getCornerPosition();
+    let newAi = new Fighter(
+        false, 
+        AI_NAMES[Math.floor(Math.random()*AI_NAMES.length)], 
+        AI_COLORS[Math.floor(Math.random()*AI_COLORS.length)], 
+        spawnPos.x, 
+        spawnPos.y
+    );
+    let tierOffset = (Math.random() > 0.6) ? 1 : 0;
+    newAi.tier = Math.max(1, player.tier + tierOffset);
+    newAi.blades = Math.floor(Math.random() * 4) + 2;
+    newAi.currentBladeHp = (newAi.tier > 1) ? 5 : 1;
+    fighters.push(newAi);
+}
+
+function gameOver() {
+    isGameOver = true;
+    document.getElementById('final-score').innerText = score;
+    document.getElementById('final-tier').innerText = `T${player.tier}`;
+    document.getElementById('game-over').style.display = 'flex';
+}
+
+function resetGame() { init(); }
+
+function updatePlayerUI() {
+    document.getElementById('score').innerText = score;
+    document.getElementById('tier-name').innerText = `T${player.tier} 칼날`;
+    document.getElementById('blade-count').innerText = player.blades;
+}
+
+function onFighterKilled(winner, loser) {
+    if (loser.isPlayer) {
+        gameOver();
+    } else {
+        winner.addBlade();
+        if (winner.isPlayer) {
+            score += 200 * loser.tier;
+            updatePlayerUI();
+        }
+        setTimeout(spawnAdaptiveAI, 2000);
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
     ctx.clearRect(0, 0, width, height);
 
-    // 격자 배경
-    ctx.strokeStyle = '#1e293b';
+    if (isGameOver) return;
+
+    // 격자 배경 렌더링
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
     ctx.lineWidth = 1;
     const gridSize = 40 * scaleRatio;
     for (let x = 0; x < width; x += gridSize) {
@@ -203,21 +404,108 @@ function render() {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
     }
 
-    if (player) {
-        player.update();
-        player.draw();
-    }
-
-    ais.forEach(ai => {
-        ai.update();
-        ai.draw();
+    // 구슬 아이템 수집 처리
+    items.forEach((item, iIndex) => {
+        item.draw();
+        fighters.forEach(f => {
+            let itemRadius = item.baseRadius * scaleRatio;
+            let fRadius = f.baseRadius * scaleRatio;
+            if (Math.hypot(f.x - item.x, f.y - item.y) < fRadius + itemRadius) {
+                f.addBlade();
+                if (f.isPlayer) {
+                    score += 25;
+                    updatePlayerUI();
+                }
+                items.splice(iIndex, 1);
+                items.push(new Item());
+            }
+        });
     });
 
-    requestAnimationFrame(render);
+    fighters.forEach(f => f.update(fighters));
+    fighters.forEach(f => f.draw());
+
+    let toRemove = new Set();
+
+    for (let i = 0; i < fighters.length; i++) {
+        for (let j = i + 1; j < fighters.length; j++) {
+            let f1 = fighters[i];
+            let f2 = fighters[j];
+
+            if (toRemove.has(f1) || toRemove.has(f2)) continue;
+
+            let f1Blades = f1.getBladePositions();
+            let f2Blades = f2.getBladePositions();
+            let b1Radius = f1.getBladeRadius();
+            let b2Radius = f2.getBladeRadius();
+
+            // 1. 칼날 vs 칼날 충돌 (1:5 상성 비례 파괴 메커니즘 복구)
+            let bladeClashed = false;
+            if (f1.clashCooldown === 0 && f2.clashCooldown === 0 && f1.blades > 0 && f2.blades > 0) {
+                for (let b1 of f1Blades) {
+                    for (let b2 of f2Blades) {
+                        let bDist = Math.hypot(b1.x - b2.x, b1.y - b2.y);
+                        if (bDist < b1Radius + b2Radius) {
+                            bladeClashed = true;
+                            
+                            if (f1.tier === f2.tier) {
+                                f1.takeBladeDamage(1);
+                                f2.takeBladeDamage(1);
+                            } else if (f1.tier > f2.tier) {
+                                let tierDiff = f1.tier - f2.tier;
+                                if (tierDiff === 1) {
+                                    f1.takeBladeDamage(1);
+                                    f2.takeBladeDamage(5);
+                                } else {
+                                    f2.takeBladeDamage(5);
+                                }
+                            } else {
+                                let tierDiff = f2.tier - f1.tier;
+                                if (tierDiff === 1) {
+                                    f1.takeBladeDamage(5);
+                                    f2.takeBladeDamage(1);
+                                } else {
+                                    f1.takeBladeDamage(5);
+                                }
+                            }
+
+                            f1.clashCooldown = 10;
+                            f2.clashCooldown = 10;
+                            if (f1.isPlayer || f2.isPlayer) updatePlayerUI();
+                            break;
+                        }
+                    }
+                    if (bladeClashed) break;
+                }
+            }
+
+            // 2. 본체 vs 본체 충돌
+            if (!bladeClashed) {
+                let f1Radius = f1.baseRadius * scaleRatio;
+                let f2Radius = f2.baseRadius * scaleRatio;
+                let dist = Math.hypot(f1.x - f2.x, f1.y - f2.y);
+                if (dist < f1Radius + f2Radius + (5 * scaleRatio)) {
+                    if (f1.getPower() > f2.getPower()) {
+                        toRemove.add(f2);
+                        onFighterKilled(f1, f2);
+                    } else if (f1.getPower() < f2.getPower()) {
+                        toRemove.add(f1);
+                        onFighterKilled(f2, f1);
+                    }
+                }
+            }
+        }
+    }
+
+    if (toRemove.size > 0) {
+        fighters = fighters.filter(f => !toRemove.has(f));
+    }
+
+    updateLeaderboard();
 }
 
-initGame();
-render();
+init();
+animate();
 </script>
 </body>
 </html>
