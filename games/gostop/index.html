@@ -3,237 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>신의 한 수: 1대1 한판 맞고 - sojang ai Arcade</title>
+    <title>고스톱 (맞고) - sojang ai Arcade</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-        body { background: #0f172a; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; }
-        #game-container { position: relative; width: 100%; height: 100%; background: #064e3b; overflow: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { background: #0b532c; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
+        #game-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 12px; }
         
-        .top-nav { position: absolute; top: 10px; right: 10px; z-index: 20; }
-        .home-btn { background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 12px; border-radius: 16px; font-weight: bold; text-decoration: none; font-size: 12px; }
+        /* 상단 UI 패널 */
+        .top-nav { position: absolute; top: 12px; right: 12px; z-index: 20; }
+        .home-btn { background: rgba(0,0,0,0.6); color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 14px; border-radius: 16px; font-weight: bold; text-decoration: none; font-size: 12px; }
 
-        .header-status { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; z-index: 20; font-size: 12px; font-weight: bold; flex-wrap: wrap; }
-        .stat-card { background: rgba(15, 23, 42, 0.85); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); }
-        .money-text { color: #facc15; }
-        .score-text { color: #f43f5e; }
+        .status-bar { display: flex; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }
 
-        canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+        /* 카드 플레이 영역 */
+        .board-zone { flex: 1; display: grid; grid-template-rows: 1fr 1.3fr 1fr; gap: 8px; margin: 10px 0; }
+        .hand-area, .field-area { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; background: rgba(0,0,0,0.25); border-radius: 12px; padding: 10px; position: relative; border: 1px inset rgba(255,255,255,0.05); }
+        
+        /* 화투 패 디자인 */
+        .card { width: 50px; height: 78px; background-color: #c0392b; border: 2px solid #fff; border-radius: 6px; cursor: pointer; transition: transform 0.15s, border-color 0.15s; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; position: relative; box-shadow: 2px 3px 6px rgba(0,0,0,0.4); }
+        .card:hover { transform: translateY(-6px); }
+        .card.selected { border-color: #f1c40f; box-shadow: 0 0 12px #f1c40f; }
+        .card-back { background: radial-gradient(circle, #e74c3c 0%, #900c3f 100%); border-color: #7d0a2e; }
+        .card-tag { position: absolute; bottom: 2px; right: 4px; font-size: 9px; background: rgba(0,0,0,0.6); padding: 1px 3px; border-radius: 3px; }
 
+        /* 모달 시스템 */
         .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); flex-direction: column; justify-content: center; align-items: center; z-index: 30; }
-        .modal-content { background: #1e1b4b; border: 2px solid #818cf8; padding: 20px; border-radius: 16px; text-align: center; max-width: 90%; }
-        .modal h2 { font-size: 24px; color: #facc15; margin-bottom: 8px; }
-        .modal p { font-size: 14px; color: #e2e8f0; margin-bottom: 15px; }
-        .btn-group { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .btn-action { padding: 10px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; text-decoration: none; }
-        .btn-go { background: #ef4444; color: #fff; }
-        .btn-stop { background: #3b82f6; color: #fff; }
-        .btn-restart { background: #10b981; color: #fff; }
-        .btn-lobby { background: #38bdf8; color: #0f172a; }
+        .modal-content { background: #1e293b; border: 2px solid #f1c40f; padding: 24px; border-radius: 16px; text-align: center; max-width: 90%; }
+        .modal h2 { font-size: 26px; color: #f1c40f; margin-bottom: 12px; }
+        .btn-action { padding: 10px 24px; font-size: 14px; font-weight: bold; border: none; border-radius: 20px; cursor: pointer; background: #2ecc71; color: #fff; margin-top: 16px; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div class="header-status">
-        <div class="stat-card">🪙 내 소지금: <span id="my-money" class="money-text">100,000</span></div>
-        <div class="stat-card">🤖 AI: <span id="ai-money" class="money-text">100,000</span></div>
-        <div class="stat-card">🚩 점당 <span id="board-score" class="score-text">1,000원</span></div>
+    <!-- 상대방 영역 -->
+    <div class="status-bar">
+        <span>🤖 상대방 (AI)</span>
+        <span>획득 패: <span id="ai-score">0</span>장</span>
+    </div>
+
+    <!-- 중앙 게임 필드 -->
+    <div class="board-zone">
+        <div id="ai-hand" class="hand-area"></div>
+        <div id="field-deck" class="field-area"></div>
+        <div id="player-hand" class="hand-area"></div>
+    </div>
+
+    <!-- 플레이어 영역 -->
+    <div class="status-bar">
+        <span>👤 플레이어 (나)</span>
+        <span>획득 패: <span id="player-score">0</span>장</span>
     </div>
 
     <div class="top-nav">
         <a href="../../index.html" class="home-btn">🏠 로비</a>
     </div>
 
-    <div id="gostop-modal" class="modal">
-        <div class="modal-content">
-            <h2 id="modal-title">3점 달성!</h2>
-            <p id="modal-desc">고를 하시겠습니까, 스톱을 하시겠습니까?</p>
-            <div class="btn-group">
-                <button class="btn-action btn-go" onclick="chooseGoStop('GO')">🚀 GO!</button>
-                <button class="btn-action btn-stop" onclick="chooseGoStop('STOP')">✋ STOP!</button>
-            </div>
-        </div>
-    </div>
-
     <div id="result-modal" class="modal">
         <div class="modal-content">
-            <h2 id="result-title">승리!</h2>
-            <p id="result-desc">15,000원을 획득했습니다.</p>
-            <div class="btn-group">
-                <button class="btn-action btn-restart" onclick="initGame()">다음 한 판</button>
-                <a href="../../index.html" class="btn-action btn-lobby">로비로 나가기</a>
-            </div>
+            <h2 id="modal-title">게임 결과</h2>
+            <p id="modal-desc">결과 표시 영역</p>
+            <button class="btn-action" onclick="restartGame()">다음 판 플레이</button>
         </div>
     </div>
-
-    <canvas id="goStopCanvas"></canvas>
 </div>
 
 <script>
-const canvas = document.getElementById('goStopCanvas');
-const ctx = canvas.getContext('2d');
-
-let width, height, scaleRatio = 1;
-let isMobile = false;
-
-let myMoney = 100000;
-let aiMoney = 100000;
-let stake = 1000;
-
-// 화투 카드 객체
-class Card {
-    constructor(month, type, subName, id) {
-        this.month = month;     // 1~12월
-        this.type = type;       // '광', '십끗', '띠', '피'
-        this.subName = subName; // '광', '열끗', '청단', '홍단', '초단', '피' 등
-        this.id = id;
-        this.x = 0;
-        this.y = 0;
-        this.baseWidth = 46;
-        this.baseHeight = 72;
-        this.width = 46;
-        this.height = 72;
-        this.isFaceUp = true;
-    }
-
-    updateScale(ratio) {
-        this.width = this.baseWidth * ratio;
-        this.height = this.baseHeight * ratio;
-    }
-
-    draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-
-        if (!this.isFaceUp) {
-            // 화투패 뒷면 (붉은 패턴 및 금빛 테두리)
-            ctx.fillStyle = '#b91c1c';
-            ctx.beginPath();
-            ctx.roundRect(0, 0, this.width, this.height, 4 * scaleRatio);
-            ctx.fill();
-            ctx.strokeStyle = '#fef08a';
-            ctx.lineWidth = 1.5 * scaleRatio;
-            ctx.stroke();
-
-            ctx.fillStyle = '#7f1d1d';
-            ctx.fillRect(4 * scaleRatio, 4 * scaleRatio, this.width - 8 * scaleRatio, this.height - 8 * scaleRatio);
-            ctx.restore();
-            return;
-        }
-
-        // 화투패 앞면 (아이보리 바탕 + 붉은 띠/무늬 렌더링)
-        ctx.fillStyle = '#fffbeb';
-        ctx.beginPath();
-        ctx.roundRect(0, 0, this.width, this.height, 4 * scaleRatio);
-        ctx.fill();
-        ctx.lineWidth = 1.2 * scaleRatio;
-        ctx.strokeStyle = '#334155';
-        ctx.stroke();
-
-        // 상단 월 표시 (빨간 원)
-        ctx.fillStyle = '#dc2626';
-        ctx.beginPath();
-        ctx.arc(10 * scaleRatio, 10 * scaleRatio, 7 * scaleRatio, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.max(8, 9 * scaleRatio)}px Pretendard`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`${this.month}`, 10 * scaleRatio, 10.5 * scaleRatio);
-
-        // 중앙 시각 그래픽 (타입별 색상 밴드)
-        let mainColor = '#94a3b8';
-        if (this.type === '광') mainColor = '#eab308';
-        else if (this.type === '십끗') mainColor = '#ef4444';
-        else if (this.type === '띠') mainColor = '#10b981';
-
-        // 카드 중심 비주얼 블록
-        ctx.fillStyle = mainColor;
-        ctx.fillRect(4 * scaleRatio, this.height / 2 - 10 * scaleRatio, this.width - 8 * scaleRatio, 20 * scaleRatio);
-
-        // 카드 하단 텍스트 (광, 홍단, 청단, 피 등)
-        ctx.fillStyle = '#0f172a';
-        ctx.font = `bold ${Math.max(9, 10 * scaleRatio)}px Pretendard`;
-        ctx.textAlign = 'center';
-        ctx.fillText(this.subName, this.width / 2, this.height / 2 + 1 * scaleRatio);
-
-        // 광 상징 태양 엠블럼
-        if (this.type === '광') {
-            ctx.fillStyle = '#dc2626';
-            ctx.beginPath();
-            ctx.arc(this.width / 2, this.height - 12 * scaleRatio, 8 * scaleRatio, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#fff';
-            ctx.font = `bold ${Math.max(8, 9 * scaleRatio)}px Pretendard`;
-            ctx.fillText('光', this.width / 2, this.height - 11.5 * scaleRatio);
-        }
-
-        ctx.restore();
-    }
-}
+// 1월~12월 화투패 기본 데이터
+const monthNames = ["1월(송학)", "2월(매화)", "3월(벚꽃)", "4월(흑싸리)", "5월(난초)", "6월(모란)", "7월(홍싸리)", "8월(공산)", "9월(국진)", "10월(단풍)", "11월(오동)", "12월(비)"];
+const types = ["광/피", "띠", "피1", "피2"];
 
 let deck = [];
-let myHand = [];
-let aiHand = [];
-let fieldCards = [];
-let myCollected = [];
-let aiCollected = [];
-
-let myScore = 0;
-let aiScore = 0;
-let goCount = 0;
-let isMyTurn = true;
-let gameState = 'PLAYING';
-
-function resize() {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-    
-    isMobile = width < 768;
-    scaleRatio = isMobile ? Math.min(width / 400, height / 720) : Math.min(width / 1100, height / 750);
-
-    const allCards = [...deck, ...myHand, ...aiHand, ...fieldCards, ...myCollected, ...aiCollected];
-    allCards.forEach(card => card.updateScale(scaleRatio));
-}
-window.addEventListener('resize', resize);
+let playerHand = [], aiHand = [], field = [];
+let playerCaptured = [], aiCaptured = [];
 
 function createDeck() {
     deck = [];
-    let id = 0;
     for (let m = 1; m <= 12; m++) {
-        // 월별 패 구성
-        if (m === 1) { // 1월 송학
-            deck.push(new Card(1, '광', '20광', id++));
-            deck.push(new Card(1, '띠', '홍단', id++));
-            deck.push(new Card(1, '피', '피', id++));
-            deck.push(new Card(1, '피', '피', id++));
-        } else if (m === 3) { // 3월 벚꽃
-            deck.push(new Card(3, '광', '20광', id++));
-            deck.push(new Card(3, '띠', '홍단', id++));
-            deck.push(new Card(3, '피', '피', id++));
-            deck.push(new Card(3, '피', '피', id++));
-        } else if (m === 8) { // 8월 공산
-            deck.push(new Card(8, '광', '20광', id++));
-            deck.push(new Card(8, '십끗', '열끗', id++));
-            deck.push(new Card(8, '피', '피', id++));
-            deck.push(new Card(8, '피', '피', id++));
-        } else if (m === 11) { // 11월 오동
-            deck.push(new Card(11, '광', '20광', id++));
-            deck.push(new Card(11, '피', '쌍피', id++));
-            deck.push(new Card(11, '피', '피', id++));
-            deck.push(new Card(11, '피', '피', id++));
-        } else if (m === 12) { // 12월 비
-            deck.push(new Card(12, '광', '비광', id++));
-            deck.push(new Card(12, '십끗', '열끗', id++));
-            deck.push(new Card(12, '띠', '띠', id++));
-            deck.push(new Card(12, '피', '쌍피', id++));
-        } else {
-            // 나머지 달 일반 구성
-            let ttiName = (m === 2) ? '홍단' : (m === 6 || m === 9 || m === 10) ? '청단' : '초단';
-            deck.push(new Card(m, '십끗', '열끗', id++));
-            deck.push(new Card(m, '띠', ttiName, id++));
-            deck.push(new Card(m, '피', '피', id++));
-            deck.push(new Card(m, '피', '피', id++));
+        for (let t = 0; t < 4; t++) {
+            deck.push({
+                month: m,
+                type: types[t],
+                id: `${m}-${t}`,
+                name: `${m}월`,
+                desc: monthNames[m-1]
+            });
         }
     }
     deck.sort(() => Math.random() - 0.5);
@@ -241,271 +95,115 @@ function createDeck() {
 
 function initGame() {
     createDeck();
-    myHand = deck.splice(0, 10);
+    playerHand = deck.splice(0, 10);
     aiHand = deck.splice(0, 10);
-    fieldCards = deck.splice(0, 8);
-    aiHand.forEach(c => c.isFaceUp = false);
-
-    myCollected = [];
-    aiCollected = [];
-    myScore = 0;
-    aiScore = 0;
-    goCount = 0;
-    isMyTurn = true;
-    gameState = 'PLAYING';
-
-    document.getElementById('gostop-modal').style.display = 'none';
+    field = deck.splice(0, 8);
+    playerCaptured = [];
+    aiCaptured = [];
+    
     document.getElementById('result-modal').style.display = 'none';
-
-    resize();
-    updateHeaderUI();
+    render();
 }
 
-function updateHeaderUI() {
-    document.getElementById('my-money').innerText = myMoney.toLocaleString();
-    document.getElementById('ai-money').innerText = aiMoney.toLocaleString();
-}
-
-function calculateScore(collected) {
-    let score = 0;
-    let kwang = collected.filter(c => c.type === '광').length;
-    let ten = collected.filter(c => c.type === '십끗').length;
-    let tti = collected.filter(c => c.type === '띠').length;
-    
-    // 피 계산 (쌍피 포함)
-    let piCount = 0;
-    collected.filter(c => c.type === '피').forEach(c => {
-        piCount += (c.subName === '쌍피') ? 2 : 1;
+function render() {
+    // 1. 플레이어 패 렌더링
+    const pHandEl = document.getElementById('player-hand');
+    pHandEl.innerHTML = '';
+    playerHand.forEach((card, idx) => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = `<div>${card.name}</div><div class="card-tag">${card.type}</div>`;
+        el.onclick = () => playTurn(idx);
+        pHandEl.appendChild(el);
     });
 
-    if (kwang >= 3) score += (kwang === 3) ? 3 : (kwang === 4 ? 4 : 15);
-    if (ten >= 5) score += (ten - 4);
-    if (tti >= 5) score += (tti - 4);
-    if (piCount >= 10) score += (piCount - 9);
-
-    return score;
-}
-
-function handleInput(clientX, clientY) {
-    if (!isMyTurn || gameState !== 'PLAYING') return;
-
-    const rect = canvas.getBoundingClientRect();
-    const mx = clientX - rect.left;
-    const my = clientY - rect.top;
-
-    myHand.forEach((card, idx) => {
-        if (mx >= card.x && mx <= card.x + card.width && my >= card.y && my <= card.y + card.height) {
-            playTurn(card, idx);
-        }
+    // 2. AI 패 렌더링 (뒷면)
+    const aiHandEl = document.getElementById('ai-hand');
+    aiHandEl.innerHTML = '';
+    aiHand.forEach(() => {
+        const el = document.createElement('div');
+        el.className = 'card card-back';
+        el.innerHTML = `🎴`;
+        aiHandEl.appendChild(el);
     });
+
+    // 3. 바닥 패 렌더링
+    const fieldEl = document.getElementById('field-deck');
+    fieldEl.innerHTML = '';
+    field.forEach((card) => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.style.backgroundColor = '#9b59b6';
+        el.innerHTML = `<div>${card.name}</div><div class="card-tag">${card.type}</div>`;
+        fieldEl.appendChild(el);
+    });
+
+    // 점수 및 획득 상태 갱신
+    document.getElementById('player-score').innerText = playerCaptured.length;
+    document.getElementById('ai-score').innerText = aiCaptured.length;
 }
 
-canvas.addEventListener('click', (e) => handleInput(e.clientX, e.clientY));
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    if (e.touches.length > 0) handleInput(e.touches[0].clientX, e.touches[0].clientY);
-}, { passive: false });
+function playTurn(idx) {
+    const card = playerHand.splice(idx, 1)[0];
+    const matchIdx = field.findIndex(f => f.month === card.month);
 
-function playTurn(card, handIndex) {
-    myHand.splice(handIndex, 1);
-    
-    let matchInField = fieldCards.find(fc => fc.month === card.month);
-    if (matchInField) {
-        fieldCards = fieldCards.filter(fc => fc !== matchInField);
-        myCollected.push(card, matchInField);
+    if (matchIdx !== -1) {
+        const matched = field.splice(matchIdx, 1)[0];
+        playerCaptured.push(card, matched);
     } else {
-        fieldCards.push(card);
+        field.push(card);
     }
 
-    if (deck.length > 0) {
-        let flipped = deck.pop();
-        flipped.isFaceUp = true;
-        let deckMatch = fieldCards.find(fc => fc.month === flipped.month);
-        if (deckMatch) {
-            fieldCards = fieldCards.filter(fc => fc !== deckMatch);
-            myCollected.push(flipped, deckMatch);
-        } else {
-            fieldCards.push(flipped);
-        }
-    }
+    render();
 
-    myScore = calculateScore(myCollected);
-    
-    if (myScore >= 3 && myScore > goCount * 2) {
-        gameState = 'GO_STOP_CHOICE';
-        document.getElementById('modal-title').innerText = `${myScore}점 달성!`;
-        document.getElementById('gostop-modal').style.display = 'flex';
+    if (playerHand.length === 0 && aiHand.length === 0) {
+        endGame();
         return;
     }
 
-    isMyTurn = false;
-    setTimeout(aiTurn, 700);
+    setTimeout(aiTurn, 600);
 }
 
 function aiTurn() {
     if (aiHand.length === 0) {
-        endGame('DRAW');
+        endGame();
         return;
     }
 
-    let playableIdx = 0;
-    for (let i = 0; i < aiHand.length; i++) {
-        if (fieldCards.some(fc => fc.month === aiHand[i].month)) {
-            playableIdx = i;
-            break;
-        }
-    }
+    let aiCardIdx = aiHand.findIndex(c => field.some(f => f.month === c.month));
+    if (aiCardIdx === -1) aiCardIdx = 0;
 
-    let card = aiHand.splice(playableIdx, 1)[0];
-    card.isFaceUp = true;
+    const card = aiHand.splice(aiCardIdx, 1)[0];
+    const matchIdx = field.findIndex(f => f.month === card.month);
 
-    let matchInField = fieldCards.find(fc => fc.month === card.month);
-    if (matchInField) {
-        fieldCards = fieldCards.filter(fc => fc !== matchInField);
-        aiCollected.push(card, matchInField);
+    if (matchIdx !== -1) {
+        const matched = field.splice(matchIdx, 1)[0];
+        aiCaptured.push(card, matched);
     } else {
-        fieldCards.push(card);
+        field.push(card);
     }
 
-    if (deck.length > 0) {
-        let flipped = deck.pop();
-        flipped.isFaceUp = true;
-        let deckMatch = fieldCards.find(fc => fc.month === flipped.month);
-        if (deckMatch) {
-            fieldCards = fieldCards.filter(fc => fc !== deckMatch);
-            aiCollected.push(flipped, deckMatch);
-        } else {
-            fieldCards.push(flipped);
-        }
-    }
+    render();
 
-    aiScore = calculateScore(aiCollected);
-
-    if (aiScore >= 3) {
-        endGame('AI_WIN');
-        return;
-    }
-
-    isMyTurn = true;
-}
-
-function chooseGoStop(choice) {
-    document.getElementById('gostop-modal').style.display = 'none';
-    if (choice === 'GO') {
-        goCount++;
-        gameState = 'PLAYING';
-        isMyTurn = false;
-        setTimeout(aiTurn, 700);
-    } else {
-        endGame('PLAYER_WIN');
+    if (playerHand.length === 0 && aiHand.length === 0) {
+        endGame();
     }
 }
 
-function endGame(result) {
-    gameState = 'ENDED';
-    let modal = document.getElementById('result-modal');
-    let title = document.getElementById('result-title');
-    let desc = document.getElementById('result-desc');
-
-    if (result === 'PLAYER_WIN') {
-        let prize = (myScore + goCount) * stake;
-        myMoney += prize;
-        aiMoney -= prize;
-        title.innerText = '🎉 승리!';
-        desc.innerText = `${myScore}점 - ${prize.toLocaleString()}원 획득!`;
-    } else if (result === 'AI_WIN') {
-        let prize = aiScore * stake;
-        myMoney -= prize;
-        aiMoney += prize;
-        title.innerText = '😭 패배!';
-        desc.innerText = `AI가 ${aiScore}점으로 승리했습니다.`;
-    } else {
-        title.innerText = '🤝 무승부!';
-        desc.innerText = '판돈 변동 없이 종료되었습니다.';
-    }
-
-    updateHeaderUI();
-    modal.style.display = 'flex';
+function endGame() {
+    const pCount = playerCaptured.length;
+    const aiCount = aiCaptured.length;
+    
+    document.getElementById('modal-title').innerText = pCount >= aiCount ? "🎉 승리!" : "😭 패배!";
+    document.getElementById('modal-desc').innerText = `최종 획득 카운트\n나: ${pCount}장 vs AI: ${aiCount}장`;
+    document.getElementById('result-modal').style.display = 'flex';
 }
 
-// 먹은 화투패를 종류별(광, 십끗, 띠, 피)로 정리해서 그리는 함수
-function drawCollectedBoard(collectedList, startX, startY, label) {
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
-    ctx.beginPath();
-    ctx.roundRect(startX, startY, (isMobile ? 180 : 250) * scaleRatio, (isMobile ? 110 : 130) * scaleRatio, 8 * scaleRatio);
-    ctx.fill();
-
-    ctx.fillStyle = '#facc15';
-    ctx.font = `bold ${Math.max(10, 11 * scaleRatio)}px Pretendard`;
-    ctx.fillText(`${label}`, startX + 10 * scaleRatio, startY + 18 * scaleRatio);
-
-    const types = ['광', '십끗', '띠', '피'];
-    types.forEach((t, i) => {
-        let items = collectedList.filter(c => c.type === t);
-        let rowY = startY + (25 + i * 22) * scaleRatio;
-        
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = `${Math.max(9, 10 * scaleRatio)}px Pretendard`;
-        ctx.fillText(`${t}(${items.length}):`, startX + 10 * scaleRatio, rowY + 10 * scaleRatio);
-
-        // 겹쳐서 카드 펼치기
-        items.forEach((card, idx) => {
-            card.x = startX + (60 + idx * 12) * scaleRatio;
-            card.y = rowY;
-            card.width = 20 * scaleRatio;
-            card.height = 30 * scaleRatio;
-            card.draw();
-        });
-    });
-}
-
-function render() {
-    ctx.clearRect(0, 0, width, height);
-
-    // 바탕 펠트
-    ctx.fillStyle = '#064e3b';
-    ctx.fillRect(0, 0, width, height);
-
-    const cardW = 46 * scaleRatio;
-    const cardH = 72 * scaleRatio;
-    const gap = isMobile ? 4 * scaleRatio : 10 * scaleRatio;
-
-    // 1. AI 손패 (상단)
-    aiHand.forEach((card, idx) => {
-        card.x = 10 * scaleRatio + idx * (cardW * 0.55);
-        card.y = 45 * scaleRatio;
-        card.draw();
-    });
-
-    // 2. 바닥 카드 (중앙)
-    const cols = isMobile ? 4 : 6;
-    fieldCards.forEach((card, idx) => {
-        const col = idx % cols;
-        const row = Math.floor(idx / cols);
-        card.x = 15 * scaleRatio + col * (cardW + gap);
-        card.y = 135 * scaleRatio + row * (cardH + gap);
-        card.draw();
-    });
-
-    // 3. 내 손패 (하단)
-    myHand.forEach((card, idx) => {
-        const row = isMobile && idx >= 5 ? 1 : 0;
-        const col = isMobile && idx >= 5 ? idx - 5 : idx;
-        card.x = 15 * scaleRatio + col * (cardW + gap * 1.5);
-        card.y = height - (isMobile ? 165 : 110) * scaleRatio + row * (cardH + 6 * scaleRatio);
-        card.draw();
-    });
-
-    // 4. 먹은 패 정리판 (우측 상단: AI / 우측 하단: 나)
-    const boardX = width - (isMobile ? 190 : 260) * scaleRatio;
-    drawCollectedBoard(aiCollected, boardX, 45 * scaleRatio, `🤖 AI 획득판 (${aiScore}점)`);
-    drawCollectedBoard(myCollected, boardX, height - (isMobile ? 140 : 160) * scaleRatio, `🙋‍♂️ 내 획득판 (${myScore}점)`);
-
-    requestAnimationFrame(render);
+function restartGame() {
+    initGame();
 }
 
 initGame();
-render();
 </script>
 </body>
 </html>
