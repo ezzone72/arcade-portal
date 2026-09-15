@@ -7,115 +7,83 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
         body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
-        header { background: #1e293b; padding: 1.5rem 2rem; border-bottom: 2px solid #38bdf8; text-align: center; }
-        header h1 { font-size: 1.8rem; color: #38bdf8; margin-bottom: 0.3rem; }
-        header p { font-size: 0.9rem; color: #94a3b8; }
+        header { background: #1e293b; padding: 2rem 1rem; border-bottom: 2px solid #38bdf8; text-align: center; }
+        header h1 { font-size: 2.2rem; color: #38bdf8; margin-bottom: 0.5rem; text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+        header p { font-size: 1rem; color: #94a3b8; }
         
-        main { flex: 1; max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; width: 100%; }
-        .section-title { font-size: 1.3rem; margin-bottom: 1rem; padding-left: 0.5rem; border-left: 4px solid #38bdf8; }
-        
-        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
-        .game-card { background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; transition: transform 0.2s, border-color 0.2s; display: flex; flex-direction: column; }
-        .game-card:hover { transform: translateY(-5px); border-color: #38bdf8; }
-        .card-banner { height: 140px; background: linear-gradient(135deg, #0284c7, #6366f1); display: flex; align-items: center; justify-content: center; font-size: 3rem; }
-        .card-body { padding: 1.2rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-        .card-tag { display: inline-block; font-size: 0.75rem; background: #0284c7; color: #fff; padding: 0.2rem 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; width: fit-content; }
-        .card-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 0.4rem; color: #f1f5f9; }
-        .card-desc { font-size: 0.85rem; color: #94a3b8; margin-bottom: 1rem; line-height: 1.4; }
-        .play-btn { display: block; text-align: center; background: #38bdf8; color: #0f172a; font-weight: bold; padding: 0.6rem; border-radius: 6px; text-decoration: none; transition: background 0.2s; }
-        .play-btn:hover { background: #7dd3fc; }
-        
-        .disabled-card { opacity: 0.5; filter: grayscale(80%); }
-        .disabled-btn { background: #475569; color: #94a3b8; cursor: not-allowed; }
+        main { flex: 1; max-width: 1200px; width: 100%; margin: 0 auto; padding: 2.5rem 1rem; }
+        .section-title { font-size: 1.5rem; color: #f1f5f9; margin-bottom: 1.5rem; padding-left: 10px; border-left: 4px solid #38bdf8; }
 
-        footer { background: #020617; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #1e293b; }
-        footer a { color: #94a3b8; text-decoration: none; margin: 0 0.5rem; }
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
+        
+        .game-card { background: #1e293b; border-radius: 16px; border: 1px solid #334155; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, border-color 0.2s; position: relative; }
+        .game-card:hover { transform: translateY(-5px); border-color: #38bdf8; }
+        
+        .badge { position: absolute; top: 15px; right: 15px; background: #38bdf8; color: #0f172a; font-weight: bold; font-size: 0.8rem; padding: 4px 10px; border-radius: 12px; }
+        .badge.defense { background: #2ecc71; color: #fff; }
+        .badge.gostop { background: #f59e0b; color: #fff; }
+
+        .card-body { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; }
+        .card-body h3 { font-size: 1.4rem; color: #f8fafc; margin-bottom: 0.8rem; }
+        .card-body p { font-size: 0.95rem; color: #94a3b8; line-height: 1.6; margin-bottom: 1.2rem; }
+        
+        .feature-list { list-style: none; margin-bottom: 1.5rem; flex: 1; }
+        .feature-list li { font-size: 0.88rem; color: #cbd5e1; margin-bottom: 0.5rem; position: relative; padding-left: 18px; line-height: 1.4; }
+        .feature-list li::before { content: "•"; color: #38bdf8; position: absolute; left: 0; font-weight: bold; }
+
+        .btn { display: inline-block; width: 100%; text-align: center; background: #38bdf8; color: #0f172a; font-weight: bold; padding: 12px 0; border-radius: 8px; text-decoration: none; transition: background 0.2s; }
+        .btn:hover { background: #0284c7; color: #fff; }
+
+        footer { background: #0f172a; border-top: 1px solid #1e293b; text-align: center; padding: 1.5rem; color: #64748b; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>🎮 sojang ai Arcade</h1>
-        <p>설치 없이 브라우저에서 바로 즐기는 2D 캔버스 미니게임 포털</p>
-    </header>
+<header>
+    <h1>🎮 sojang ai 오락실 포털</h1>
+    <p>웹 브라우저에서 바로 즐기는 스릴 넘치는 미니게임 컬렉션</p>
+</header>
 
-    <main>
-        <h2 class="section-title">⚔️ 회전칼날 (Survival Blade) 시리즈</h2>
-        <div class="game-grid">
-            <!-- v3.3 대표 버전 -->
-            <div class="game-card">
-                <div class="card-banner">⚔️</div>
-                <div class="card-body">
-                    <div>
-                        <span class="card-tag">NEW v3.3</span>
-                        <div class="card-title">회전칼날: 배틀로얄</div>
-                        <div class="card-desc">AI 상호상쇄 칼날 딜교환 및 버서커 난입! 10인 실시간 생존 게임</div>
-                    </div>
-                    <a href="games/survival-blade/index.html" class="play-btn">지금 플레이</a>
-                </div>
-            </div>
+<main>
+    <h2 class="section-title">🕹️ 추천 및 플레이 가능 게임</h2>
+    <div class="game-grid">
 
-            <!-- v2.0 스피드 모드 -->
-            <div class="game-card">
-                <div class="card-banner">⚡</div>
-                <div class="card-body">
-                    <div>
-                        <span class="card-tag">v2.0</span>
-                        <div class="card-title">회전칼날: 스피드 모드</div>
-                        <div class="card-desc">빠른 이동속도와 극강의 콤보 감각을 강조한 에디션</div>
-                    </div>
-                    <a href="games/survival-blade/v2-speed.html" class="play-btn">지금 플레이</a>
-                </div>
-            </div>
-
-            <!-- v1.0 클래식 -->
-            <div class="game-card">
-                <div class="card-banner">🕹️</div>
-                <div class="card-body">
-                    <div>
-                        <span class="card-tag">v1.0 Classic</span>
-                        <div class="card-title">회전칼날: 원조 클래식</div>
-                        <div class="card-desc">회전칼날 io의 원조 맛! 기본기에 충실한 원조 생존 모드</div>
-                    </div>
-                    <a href="games/survival-blade/v1-classic.html" class="play-btn">지금 플레이</a>
-                </div>
+        <!-- 1. 서바이벌 블레이드 -->
+        <div class="game-card">
+            <span class="badge">v3.4 HOT</span>
+            <div class="card-body">
+                <h3>⚔️ 서바이벌 블레이드</h3>
+                <p>회전하는 칼날을 조율하여 10인의 AI와 벌이는 실시간 다자간 배틀로얄 생존 액션 게임입니다.</p>
+                <a href="games/survival-blade/index.html" class="btn">지금 플레이하기</a>
             </div>
         </div>
 
-        <h2 class="section-title">🚀 미니게임 라인업 (오픈 예정)</h2>
-        <div class="game-grid">
-            <div class="game-card disabled-card">
-                <div class="card-banner">🏰</div>
-                <div class="card-body">
-                    <div>
-                        <span class="card-tag" style="background:#64748b;">Defense</span>
-                        <div class="card-title">기지 타워 디펜스</div>
-                        <div class="card-desc">끝없이 밀려오는 적들을 막아내는 웨이브 방어 전략 게임</div>
-                    </div>
-                    <span class="play-btn disabled-btn">준비 중</span>
-                </div>
-            </div>
-
-            <div class="game-card disabled-card">
-                <div class="card-banner">🧱</div>
-                <div class="card-body">
-                    <div>
-                        <span class="card-tag" style="background:#64748b;">Arcade</span>
-                        <div class="card-title">바운스 샷 (벽돌깨기)</div>
-                        <div class="card-desc">각도를 조절해 벽돌을 깨뜨리는 타격감 극대화 미니게임</div>
-                    </div>
-                    <span class="play-btn disabled-btn">준비 중</span>
-                </div>
+        <!-- 2. 기지 타워 디펜스 -->
+        <div class="game-card">
+            <span class="badge defense">v1.0 NEW</span>
+            <div class="card-body">
+                <h3>🏰 단일 타워 기지 디펜스</h3>
+                <p>사방에서 끝없이 몰려오는 적들로부터 중앙의 기지를 사수하는 웨이브 방어 전략 게임입니다.</p>
+                <a href="games/base-defense/index.html" class="btn">지금 플레이하기</a>
             </div>
         </div>
-    </main>
 
-    <footer>
-        <p>&copy; 2026 sojang ai Arcade Portal. All rights reserved.</p>
-        <p style="margin-top:0.5rem;">
-            <a href="#">개인정보처리방침</a> | <a href="#">이용약관</a> | <a href="#">문의하기</a>
-        </p>
-    </footer>
+        <!-- 3. 신의 한 수: 맞고 -->
+        <div class="game-card">
+            <span class="badge gostop">v1.0 NEW</span>
+            <div class="card-body">
+                <h3>🎴 신의 한 수: 1대1 한판 맞고</h3>
+                <p>인공지능 AI와 즐기는 화려한 무늬의 1대1 한판 맞고(고스톱) 보드게임입니다.</p>
+                <a href="games/gostop/index.html" class="btn">지금 플레이하기</a>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<footer>
+    <p>© sojang ai Arcade Portal. All rights reserved.</p>
+</footer>
 
 </body>
 </html>
