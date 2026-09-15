@@ -2,9 +2,120 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>sojang ai Arcade</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sojang ai 오락실 포털 | 미니게임 모음</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
+        header { background: #1e293b; padding: 1.5rem 2rem; border-bottom: 2px solid #38bdf8; text-align: center; }
+        header h1 { font-size: 1.8rem; color: #38bdf8; margin-bottom: 0.3rem; }
+        header p { font-size: 0.9rem; color: #94a3b8; }
+        
+        main { flex: 1; max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; width: 100%; }
+        .section-title { font-size: 1.3rem; margin-bottom: 1rem; padding-left: 0.5rem; border-left: 4px solid #38bdf8; }
+        
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+        .game-card { background: #1e293b; border-radius: 12px; overflow: hidden; border: 1px solid #334155; transition: transform 0.2s, border-color 0.2s; display: flex; flex-direction: column; }
+        .game-card:hover { transform: translateY(-5px); border-color: #38bdf8; }
+        .card-banner { height: 140px; background: linear-gradient(135deg, #0284c7, #6366f1); display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+        .card-body { padding: 1.2rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-tag { display: inline-block; font-size: 0.75rem; background: #0284c7; color: #fff; padding: 0.2rem 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; width: fit-content; }
+        .card-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 0.4rem; color: #f1f5f9; }
+        .card-desc { font-size: 0.85rem; color: #94a3b8; margin-bottom: 1rem; line-height: 1.4; }
+        .play-btn { display: block; text-align: center; background: #38bdf8; color: #0f172a; font-weight: bold; padding: 0.6rem; border-radius: 6px; text-decoration: none; transition: background 0.2s; }
+        .play-btn:hover { background: #7dd3fc; }
+        
+        .disabled-card { opacity: 0.5; filter: grayscale(80%); }
+        .disabled-btn { background: #475569; color: #94a3b8; cursor: not-allowed; }
+
+        footer { background: #020617; padding: 1.5rem; text-align: center; font-size: 0.8rem; color: #64748b; border-top: 1px solid #1e293b; }
+        footer a { color: #94a3b8; text-decoration: none; margin: 0 0.5rem; }
+    </style>
 </head>
 <body>
-    <h1>sojang ai 오락실 포털 준비 중</h1>
+
+    <header>
+        <h1>🎮 sojang ai Arcade</h1>
+        <p>설치 없이 브라우저에서 바로 즐기는 2D 캔버스 미니게임 포털</p>
+    </header>
+
+    <main>
+        <h2 class="section-title">⚔️ 회전칼날 (Survival Blade) 시리즈</h2>
+        <div class="game-grid">
+            <!-- v3.3 대표 버전 -->
+            <div class="game-card">
+                <div class="card-banner">⚔️</div>
+                <div class="card-body">
+                    <div>
+                        <span class="card-tag">NEW v3.3</span>
+                        <div class="card-title">회전칼날: 배틀로얄</div>
+                        <div class="card-desc">AI 상호상쇄 칼날 딜교환 및 버서커 난입! 10인 실시간 생존 게임</div>
+                    </div>
+                    <a href="games/survival-blade/index.html" class="play-btn">지금 플레이</a>
+                </div>
+            </div>
+
+            <!-- v2.0 스피드 모드 -->
+            <div class="game-card">
+                <div class="card-banner">⚡</div>
+                <div class="card-body">
+                    <div>
+                        <span class="card-tag">v2.0</span>
+                        <div class="card-title">회전칼날: 스피드 모드</div>
+                        <div class="card-desc">빠른 이동속도와 극강의 콤보 감각을 강조한 에디션</div>
+                    </div>
+                    <a href="games/survival-blade/v2-speed.html" class="play-btn">지금 플레이</a>
+                </div>
+            </div>
+
+            <!-- v1.0 클래식 -->
+            <div class="game-card">
+                <div class="card-banner">🕹️</div>
+                <div class="card-body">
+                    <div>
+                        <span class="card-tag">v1.0 Classic</span>
+                        <div class="card-title">회전칼날: 원조 클래식</div>
+                        <div class="card-desc">회전칼날 io의 원조 맛! 기본기에 충실한 원조 생존 모드</div>
+                    </div>
+                    <a href="games/survival-blade/v1-classic.html" class="play-btn">지금 플레이</a>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">🚀 미니게임 라인업 (오픈 예정)</h2>
+        <div class="game-grid">
+            <div class="game-card disabled-card">
+                <div class="card-banner">🏰</div>
+                <div class="card-body">
+                    <div>
+                        <span class="card-tag" style="background:#64748b;">Defense</span>
+                        <div class="card-title">기지 타워 디펜스</div>
+                        <div class="card-desc">끝없이 밀려오는 적들을 막아내는 웨이브 방어 전략 게임</div>
+                    </div>
+                    <span class="play-btn disabled-btn">준비 중</span>
+                </div>
+            </div>
+
+            <div class="game-card disabled-card">
+                <div class="card-banner">🧱</div>
+                <div class="card-body">
+                    <div>
+                        <span class="card-tag" style="background:#64748b;">Arcade</span>
+                        <div class="card-title">바운스 샷 (벽돌깨기)</div>
+                        <div class="card-desc">각도를 조절해 벽돌을 깨뜨리는 타격감 극대화 미니게임</div>
+                    </div>
+                    <span class="play-btn disabled-btn">준비 중</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 sojang ai Arcade Portal. All rights reserved.</p>
+        <p style="margin-top:0.5rem;">
+            <a href="#">개인정보처리방침</a> | <a href="#">이용약관</a> | <a href="#">문의하기</a>
+        </p>
+    </footer>
+
 </body>
 </html>
