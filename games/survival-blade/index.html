@@ -9,21 +9,21 @@
         body { background: #0f172a; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
         #game-container { position: relative; width: 100%; height: 100%; }
         
-        .top-nav { position: absolute; top: 12px; right: 12px; z-index: 20; }
-        .home-btn { background: rgba(30, 41, 59, 0.8); color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 12px; border-radius: 16px; font-weight: bold; text-decoration: none; font-size: 12px; }
+        .top-nav { position: absolute; top: 10px; right: 10px; z-index: 20; }
+        .home-btn { background: rgba(30, 41, 59, 0.85); color: #38bdf8; border: 1px solid #38bdf8; padding: 5px 10px; border-radius: 14px; font-weight: bold; text-decoration: none; font-size: 11px; }
 
-        .header-status { position: absolute; top: 12px; left: 12px; display: flex; gap: 8px; z-index: 20; font-size: 12px; font-weight: bold; }
-        .stat-card { background: rgba(15, 23, 42, 0.85); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); }
+        .header-status { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; z-index: 20; font-size: 11px; font-weight: bold; }
+        .stat-card { background: rgba(15, 23, 42, 0.85); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); }
         .score-text { color: #facc15; }
 
         canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
         .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); flex-direction: column; justify-content: center; align-items: center; z-index: 30; }
         .modal-content { background: #1e293b; border: 2px solid #38bdf8; padding: 20px; border-radius: 16px; text-align: center; max-width: 90%; }
-        .modal h2 { font-size: 24px; color: #ef4444; margin-bottom: 8px; }
-        .modal p { font-size: 14px; color: #e2e8f0; margin-bottom: 15px; }
+        .modal h2 { font-size: 22px; color: #ef4444; margin-bottom: 8px; }
+        .modal p { font-size: 13px; color: #e2e8f0; margin-bottom: 16px; }
         .btn-group { display: flex; gap: 10px; justify-content: center; }
-        .btn-action { padding: 10px 20px; font-size: 14px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; text-decoration: none; }
+        .btn-action { padding: 8px 16px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; }
         .btn-restart { background: #38bdf8; color: #0f172a; }
         .btn-lobby { background: #64748b; color: #fff; }
     </style>
@@ -59,6 +59,7 @@ const canvas = document.getElementById('bladeCanvas');
 const ctx = canvas.getContext('2d');
 
 let width, height;
+let scaleRatio = 1;
 let player, ais = [], items = [];
 let targetX = 0, targetY = 0;
 
@@ -66,56 +67,64 @@ class Character {
     constructor(x, y, isPlayer, name) {
         this.x = x;
         this.y = y;
-        this.radius = 18;
-        this.speed = isPlayer ? 4 : 2.5;
+        this.baseRadius = 16;
+        this.baseSpeed = isPlayer ? 4.5 : 2.8;
         this.isPlayer = isPlayer;
         this.name = name;
         this.blades = 1;
         this.tier = 1;
-        this.angle = 0;
+        this.angle = Math.random() * Math.PI * 2;
         this.isDead = false;
     }
 
     update() {
         if (this.isDead) return;
-        this.angle += 0.04;
+        this.angle += 0.05;
+
+        const currentSpeed = this.baseSpeed * scaleRatio;
+        const currentRadius = this.baseRadius * scaleRatio;
 
         if (this.isPlayer) {
             let dx = targetX - this.x;
             let dy = targetY - this.y;
             let dist = Math.hypot(dx, dy);
-            if (dist > 5) {
-                this.x += (dx / dist) * this.speed;
-                this.y += (dy / dist) * this.speed;
+            if (dist > 5 * scaleRatio) {
+                this.x += (dx / dist) * currentSpeed;
+                this.y += (dy / dist) * currentSpeed;
             }
         } else {
-            // AI 임의 이동
-            this.x += (Math.random() - 0.5) * this.speed * 2;
-            this.y += (Math.random() - 0.5) * this.speed * 2;
+            this.x += (Math.random() - 0.5) * currentSpeed * 1.5;
+            this.y += (Math.random() - 0.5) * currentSpeed * 1.5;
         }
 
-        // 화면 경계 제한
-        this.x = Math.max(this.radius, Math.min(width - this.radius, this.x));
-        this.y = Math.max(this.radius, Math.min(height - this.radius, this.y));
+        this.x = Math.max(currentRadius, Math.min(width - currentRadius, this.x));
+        this.y = Math.max(currentRadius, Math.min(height - currentRadius, this.y));
     }
 
     draw() {
         if (this.isDead) return;
 
-        // 본체
+        const radius = this.baseRadius * scaleRatio;
+
+        // 플레이어/AI 본체
         ctx.fillStyle = this.isPlayer ? '#38bdf8' : '#ef4444';
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2 * scaleRatio;
+        ctx.stroke();
 
-        // 이름
+        // 이름 표기
         ctx.fillStyle = '#fff';
-        ctx.font = '11px Pretendard';
+        ctx.font = `bold ${Math.max(10, 11 * scaleRatio)}px Pretendard`;
         ctx.textAlign = 'center';
-        ctx.fillText(this.name, this.x, this.y - this.radius - 8);
+        ctx.fillText(this.name, this.x, this.y - radius - 6 * scaleRatio);
 
-        // 회전 칼날
-        const bladeOrbit = 35 + this.tier * 5;
+        // 회전 칼날 (스케일 적용)
+        const bladeOrbit = (30 + this.tier * 4) * scaleRatio;
+        const bladeRadius = 5.5 * scaleRatio;
+
         for (let i = 0; i < this.blades; i++) {
             let bAngle = this.angle + (Math.PI * 2 / this.blades) * i;
             let bx = this.x + Math.cos(bAngle) * bladeOrbit;
@@ -123,8 +132,11 @@ class Character {
 
             ctx.fillStyle = '#facc15';
             ctx.beginPath();
-            ctx.arc(bx, by, 6, 0, Math.PI * 2);
+            ctx.arc(bx, by, bladeRadius, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = '#eab308';
+            ctx.lineWidth = 1.5 * scaleRatio;
+            ctx.stroke();
         }
     }
 }
@@ -132,9 +144,12 @@ class Character {
 function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
+    scaleRatio = Math.min(width / 800, height / 600);
+    if (scaleRatio < 0.7) scaleRatio = 0.7;
+
     if (player) {
-        targetX = width / 2;
-        targetY = height / 2;
+        targetX = player.x;
+        targetY = player.y;
     }
 }
 window.addEventListener('resize', resize);
@@ -151,6 +166,14 @@ canvas.addEventListener('touchmove', (e) => {
     if (e.touches.length > 0) handleInput(e.touches[0].clientX, e.touches[0].clientY);
 }, { passive: false });
 
+function updateUI() {
+    if (player) {
+        document.getElementById('blade-count').innerText = `${player.blades}개 (T${player.tier})`;
+    }
+    const aliveCount = (player && !player.isDead ? 1 : 0) + ais.filter(a => !a.isDead).length;
+    document.getElementById('alive-count').innerText = `${aliveCount}명`;
+}
+
 function initGame() {
     resize();
     player = new Character(width / 2, height / 2, true, '나');
@@ -159,10 +182,11 @@ function initGame() {
 
     ais = [];
     for (let i = 1; i <= 9; i++) {
-        ais.push(new Character(Math.random() * width, Math.random() * height, false, `AI-${i}`));
+        ais.push(new Character(Math.random() * (width - 40) + 20, Math.random() * (height - 40) + 20, false, `AI-${i}`));
     }
 
     document.getElementById('gameover-modal').style.display = 'none';
+    updateUI();
 }
 
 function render() {
@@ -171,15 +195,18 @@ function render() {
     // 격자 배경
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
-    for (let x = 0; x < width; x += 40) {
+    const gridSize = 40 * scaleRatio;
+    for (let x = 0; x < width; x += gridSize) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
     }
-    for (let y = 0; y < height; y += 40) {
+    for (let y = 0; y < height; y += gridSize) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
     }
 
-    player.update();
-    player.draw();
+    if (player) {
+        player.update();
+        player.draw();
+    }
 
     ais.forEach(ai => {
         ai.update();
