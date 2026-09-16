@@ -143,16 +143,23 @@ class Enemy {
         let dist = Math.hypot(this.x - tower.x, this.y - tower.y);
         if (!waveFirstEnemyChecked && dist <= tower.range) {
             waveFirstEnemyChecked = true;
-            this.calculateCheatPosition();
+            this.calculateCheatAngle();
         }
     }
 
-    calculateCheatPosition() {
-        // 첫 적이 타워보다 위쪽에 오면 'damage', 아래쪽이면 'speed'
-        if (this.y < tower.y) {
+    calculateCheatAngle() {
+        let rad = Math.atan2(this.y - tower.y, this.x - tower.x);
+        let deg = rad * (180 / Math.PI);
+        if (deg < 0) deg += 360;
+
+        if (deg >= 0 && deg < 90) {
             targetCheatUpgrade = 'damage';
-        } else {
+        } else if (deg >= 90 && deg < 180) {
             targetCheatUpgrade = 'speed';
+        } else if (deg >= 180 && deg < 270) {
+            targetCheatUpgrade = 'range';
+        } else {
+            targetCheatUpgrade = 'multi';
         }
     }
 
@@ -322,11 +329,11 @@ function animate() {
     // 2. 동시 스폰 마릿수 계산 (30W 이상부터 5웨이브마다 2배씩 폭증)
     let spawnBatchCount = 1;
     if (wave >= 15 && wave < 30) {
-        spawnBatchCount = 1 + Math.floor((wave - 10) / 5);
+        spawnBatchCount = 1 + Math.floor((wave - 10) / 5); // 15W:2, 20W:3, 25W:4
     } else if (wave >= 30) {
-        let baseCount = 4;
-        let doubleTiers = Math.floor((wave - 30) / 5) + 1;
-        spawnBatchCount = baseCount * Math.pow(2, doubleTiers);
+        let baseCount = 4; // 25~29웨이브에서의 마릿수
+        let doubleTiers = Math.floor((wave - 30) / 5) + 1; // 30W: 1단계, 35W: 2단계...
+        spawnBatchCount = baseCount * Math.pow(2, doubleTiers); // 30W: 8마리, 35W: 16마리...
     }
 
     waveTimer++;

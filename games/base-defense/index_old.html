@@ -9,6 +9,7 @@
         body { background: #0b0c10; color: #fff; font-family: 'Pretendard', sans-serif; overflow: hidden; width: 100vw; height: 100vh; }
         #game-container { position: relative; width: 100%; height: 100%; background: #1f2833; }
         
+        /* 상단 UI 패널 */
         .top-nav { position: absolute; top: 12px; right: 12px; z-index: 20; }
         .home-btn { background: rgba(30, 41, 59, 0.85); color: #38bdf8; border: 1px solid #38bdf8; padding: 6px 14px; border-radius: 16px; font-weight: bold; text-decoration: none; font-size: 12px; }
 
@@ -17,13 +18,14 @@
         .gold-text { color: #f1c40f; }
         .wave-text { color: #e74c3c; }
         .hp-text { color: #2ecc71; }
-        .cheat-badge { color: #a855f7; border-color: #a855f7; }
 
+        /* 하단 업그레이드 패널 UI (모바일 터치 최적화) */
         .upgrade-panel { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.2); z-index: 20; max-width: 95%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .up-btn { background: #34495e; color: #fff; border: 1px solid #5d6d7e; border-radius: 10px; padding: 8px 12px; font-size: 12px; cursor: pointer; text-align: center; min-width: 95px; flex-shrink: 0; transition: 0.1s; }
         .up-btn:active { background: #4a6572; transform: scale(0.95); }
         .up-btn span { display: block; font-size: 10px; color: #f1c40f; margin-top: 2px; }
 
+        /* 모달 시스템 */
         .modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 30; }
         .modal-content { background: #1e293b; border: 2px solid #e74c3c; padding: 24px; border-radius: 16px; text-align: center; max-width: 90%; }
         .modal h2 { font-size: 28px; color: #e74c3c; margin-bottom: 10px; }
@@ -43,7 +45,6 @@
         <div class="stat-card">💰 골드: <span id="gold" class="gold-text">100</span></div>
         <div class="stat-card">🌊 웨이브: <span id="wave" class="wave-text">1</span></div>
         <div class="stat-card">❤️ 체력: <span id="hp" class="hp-text">100 / 100</span></div>
-        <div class="stat-card cheat-badge" id="cheat-status" style="display:none;">⚡ 치트: 적 속도 -10%</div>
     </div>
 
     <div class="top-nav">
@@ -80,11 +81,6 @@ let width, height, scaleRatio = 1;
 let gold = 100;
 let wave = 1;
 let isGameOver = false;
-
-let waveFirstEnemyChecked = false;
-let targetCheatUpgrade = null;
-let isCheatActive = false;
-let hasUpgradedThisWave = false;
 
 const tower = {
     x: 0, y: 0, baseRadius: 26, baseRange: 160, range: 160,
@@ -127,10 +123,7 @@ class Enemy {
         let hpBonus = (wave - 1) * 15;
         this.maxHp = 30 + hpBonus;
         this.hp = this.maxHp;
-        
-        let speedMultiplier = isCheatActive ? 0.9 : 1.0;
-        this.speed = (1.2 + Math.random() * 0.4) * scaleRatio * speedMultiplier;
-        
+        this.speed = (1.2 + Math.random() * 0.4) * scaleRatio;
         this.baseRadius = 11;
         this.reward = 10 + wave * 2;
     }
@@ -139,21 +132,6 @@ class Enemy {
         let angle = Math.atan2(tower.y - this.y, tower.x - this.x);
         this.x += Math.cos(angle) * this.speed;
         this.y += Math.sin(angle) * this.speed;
-
-        let dist = Math.hypot(this.x - tower.x, this.y - tower.y);
-        if (!waveFirstEnemyChecked && dist <= tower.range) {
-            waveFirstEnemyChecked = true;
-            this.calculateCheatPosition();
-        }
-    }
-
-    calculateCheatPosition() {
-        // 첫 적이 타워보다 위쪽에 오면 'damage', 아래쪽이면 'speed'
-        if (this.y < tower.y) {
-            targetCheatUpgrade = 'damage';
-        } else {
-            targetCheatUpgrade = 'speed';
-        }
     }
 
     draw() {
@@ -164,6 +142,7 @@ class Enemy {
         ctx.fill();
         ctx.closePath();
 
+        // 적 HP 바 선명하게 복원
         const barW = 22 * scaleRatio;
         const barH = 4 * scaleRatio;
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -245,11 +224,6 @@ function init() {
     enemies = []; bullets = []; particles = [];
     spawnedCount = 0; enemiesToSpawn = 10;
     
-    waveFirstEnemyChecked = false;
-    targetCheatUpgrade = null;
-    isCheatActive = false;
-    hasUpgradedThisWave = false;
-
     document.getElementById('game-over').style.display = 'none';
     updateUI();
 }
@@ -272,28 +246,14 @@ function upgrade(type) {
         if (type === 'multi') tower.targets += 1;
 
         tower.costs[type] = Math.floor(tower.costs[type] * 1.5);
-
-        if (!hasUpgradedThisWave && targetCheatUpgrade && type === targetCheatUpgrade) {
-            applySpeedCheat();
-        }
-        hasUpgradedThisWave = true;
     }
     updateUI();
-}
-
-function applySpeedCheat() {
-    isCheatActive = true;
-    enemies.forEach(e => {
-        e.speed *= 0.9;
-    });
-    document.getElementById('cheat-status').style.display = 'inline-block';
 }
 
 function updateUI() {
     document.getElementById('gold').innerText = gold;
     document.getElementById('wave').innerText = wave;
     document.getElementById('hp').innerText = `${Math.ceil(tower.hp)} / ${tower.maxHp}`;
-    document.getElementById('cheat-status').style.display = isCheatActive ? 'inline-block' : 'none';
     
     ['damage', 'speed', 'range', 'multi'].forEach(type => {
         document.getElementById(`lvl-${type}`).innerText = tower.levels[type];
@@ -315,44 +275,22 @@ function animate() {
 
     if (isGameOver) return;
 
-    // 1. 스폰 간격 계산 (최소 25프레임)
-    const waveTier = Math.floor((wave - 1) / 5);
-    const spawnInterval = Math.max(25, Math.floor(50 * Math.pow(0.9, waveTier)));
-
-    // 2. 동시 스폰 마릿수 계산 (30W 이상부터 5웨이브마다 2배씩 폭증)
-    let spawnBatchCount = 1;
-    if (wave >= 15 && wave < 30) {
-        spawnBatchCount = 1 + Math.floor((wave - 10) / 5);
-    } else if (wave >= 30) {
-        let baseCount = 4;
-        let doubleTiers = Math.floor((wave - 30) / 5) + 1;
-        spawnBatchCount = baseCount * Math.pow(2, doubleTiers);
-    }
-
+    // 1. 적 스폰 및 웨이브 진행 제어 복원
     waveTimer++;
-    if (waveTimer % spawnInterval === 0 && spawnedCount < enemiesToSpawn) {
-        for (let i = 0; i < spawnBatchCount; i++) {
-            if (spawnedCount < enemiesToSpawn) {
-                enemies.push(new Enemy());
-                spawnedCount++;
-            }
-        }
+    if (waveTimer % 50 === 0 && spawnedCount < enemiesToSpawn) {
+        enemies.push(new Enemy());
+        spawnedCount++;
     }
 
     if (spawnedCount >= enemiesToSpawn && enemies.length === 0) {
         wave++;
         spawnedCount = 0;
         enemiesToSpawn = 10 + wave * 3;
-        gold += 50 + wave * 10;
-        
-        waveFirstEnemyChecked = false;
-        targetCheatUpgrade = null;
-        isCheatActive = false;
-        hasUpgradedThisWave = false;
-        
+        gold += 50 + wave * 10; // 웨이브 보상
         updateUI();
     }
 
+    // 2. 멀티샷 및 거리 기반 타겟팅 복원
     tower.cooldown += 1 / 60;
     if (tower.cooldown >= (1 / tower.attackSpeed)) {
         let inRangeEnemies = enemies
@@ -369,21 +307,25 @@ function animate() {
         }
     }
 
+    // 3. 파티클 이펙트
     particles.forEach((p, idx) => {
         p.update(); p.draw();
         if (p.alpha <= 0) particles.splice(idx, 1);
     });
 
+    // 탄환
     bullets = bullets.filter(b => {
         let hit = b.update();
         if (!hit) b.draw();
         return !hit;
     });
 
+    // 적 개체 및 충돌 처리
     enemies.forEach((e, idx) => {
         e.update();
         e.draw();
 
+        // 기지 충돌 감지
         if (Math.hypot(e.x - tower.x, e.y - tower.y) < (tower.baseRadius * scaleRatio) + (e.baseRadius * scaleRatio)) {
             tower.hp -= 10;
             createParticles(e.x, e.y, '#e74c3c');
@@ -393,6 +335,7 @@ function animate() {
             if (tower.hp <= 0) gameOver();
         }
 
+        // 처치 시 골드 및 파티클
         if (e.hp <= 0) {
             gold += e.reward;
             createParticles(e.x, e.y, '#2ecc71');
@@ -401,9 +344,10 @@ function animate() {
         }
     });
 
+    // 4. 중앙 기지 렌더링
     ctx.beginPath();
     ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
-    ctx.strokeStyle = isCheatActive ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255, 255, 255, 0.12)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
     ctx.lineWidth = 2 * scaleRatio;
     ctx.stroke();
 
