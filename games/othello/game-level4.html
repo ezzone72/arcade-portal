@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오셀로 - 4단계 마스터 (개방도 + 알파베타)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; user-select: none; }
+        body { background: #0f172a; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; }
+
+        header { text-align: center; margin-bottom: 1rem; }
+        header h1 { font-size: 1.8rem; color: #ef4444; margin-bottom: 0.3rem; }
+        header p { font-size: 0.9rem; color: #94a3b8; }
+
+        .game-wrapper { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+
+        .scoreboard { display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 480px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 0.8rem 1.5rem; }
+        .player-info { display: flex; align-items: center; gap: 0.6rem; font-weight: bold; font-size: 1.1rem; }
+        .disc-icon { width: 24px; height: 24px; border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+        .disc-black { background: #111827; border: 2px solid #4b5563; }
+        .disc-white { background: #f9fafb; border: 2px solid #d1d5db; }
+        
+        .status-badge { background: #334155; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; color: #ef4444; font-weight: 600; }
+
+        .board-container { position: relative; background: #15803d; border: 6px solid #0f5128; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        canvas { display: block; cursor: pointer; }
+
+        .control-bar { display: flex; gap: 1rem; width: 100%; max-width: 480px; }
+        .btn { flex: 1; text-align: center; padding: 0.8rem; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; transition: 0.2s; text-decoration: none; font-size: 0.95rem; }
+        .btn-restart { background: #ef4444; color: #fff; } .btn-restart:hover { background: #dc2626; }
+        .btn-menu { background: #334155; color: #f8fafc; } .btn-menu:hover { background: #475569; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); flex-direction: column; justify-content: center; align-items: center; z-index: 50; }
+        .modal-content { background: #1e293b; border: 2px solid #ef4444; padding: 2rem; border-radius: 16px; text-align: center; max-width: 380px; width: 90%; }
+        .modal h2 { font-size: 2rem; color: #ef4444; margin-bottom: 0.5rem; }
+        .modal p { font-size: 1.1rem; color: #cbd5e1; margin-bottom: 1.5rem; }
+        .modal-btns { display: flex; gap: 0.8rem; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>⚪ 오셀로 4단계 - 마스터 🔴</h1>
+    <p>상대: 완전 탐색 AI (Alpha-Beta + Mobility Control)</p>
+</header>
+
+<div class="game-wrapper">
+    <div class="scoreboard">
+        <div class="player-info">
+            <span class="disc-icon disc-black"></span>
+            <span>나 (검은색): <span id="black-score">2</span></span>
+        </div>
+        <div id="status-message" class="status-badge">내 턴입니다</div>
+        <div class="player-info">
+            <span>AI (흰색): <span id="white-score">2</span></span>
+            <span class="disc-icon disc-white"></span>
+        </div>
+    </div>
+
+    <div class="board-container">
+        <canvas id="othelloCanvas" width="480" height="480"></canvas>
+    </div>
+
+    <div class="control-bar">
+        <button class="btn btn-restart" onclick="initGame()">다시 시작</button>
+        <a href="index.html" class="btn btn-menu">난이도 선택으로</a>
+    </div>
+</div>
+
+<div id="result-modal" class="modal">
+    <div class="modal-content">
+        <h2 id="result-title">게임 종료</h2>
+        <p id="result-desc">결과 계산 중...</p>
+        <div class="modal-btns">
+            <button class="btn btn-restart" onclick="initGame()">다시 하기</button>
+            <a href="index.html" class="btn btn-menu">난이도 선택</a>
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('othelloCanvas');
+const ctx = canvas.getContext('2d');
+
+const BOARD_SIZE = 8;
+const CELL_SIZE = canvas.width / BOARD_SIZE;
+
+let board = [];
+let currentPlayer = 1;
+let isGameOver = false;
+let validMoves = [];
+
+const DIRECTIONS = [
+    [-1, -1], [-1, 0], [-1, 1],
+    [0, -1],          [0, 1],
+    [1, -1],  [1, 0],  [1, 1]
+];
+
+// 위치별 가중치 표
+const WEIGHT_MATRIX = [
+    [ 120, -20,  20,   5,   5,  20, -20, 120],
+    [-20, -40,  -5,  -5,  -5,  -5, -40, -20],
+    [  20,  -5,  15,   3,   3,  15,  -5,  20],
+    [   5,  -5,   3,   3,   3,   3,  -5,   5],
+    [   5,  -5,   3,   3,   3,   3,  -5,   5],
+    [  20,  -5,  15,   3,   3,  15,  -5,  20],
+    [-20, -40,  -5,  -5,  -5,  -5, -40, -20],
+    [ 120, -20,  20,   5,   5,  20, -20, 120]
+];
+
+function initGame() {
+    board = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
+    
+    board[3][3] = 2;
+    board[3][4] = 1;
+    board[4][3] = 1;
+    board[4][4] = 2;
+
+    currentPlayer = 1;
+    isGameOver = false;
+
+    document.getElementById('result-modal').style.display = 'none';
+    updateGameState();
+}
+
+function getFlipsOnBoard(b, r, c, player) {
+    if (b[r][c] !== 0) return [];
+
+    const opponent = player === 1 ? 2 : 1;
+    let totalFlips = [];
+
+    for (let [dr, dc] of DIRECTIONS) {
+        let nr = r + dr;
+        let nc = c + dc;
+        let lineFlips = [];
+
+        while (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && b[nr][nc] === opponent) {
+            lineFlips.push([nr, nc]);
+            nr += dr;
+            nc += dc;
+        }
+
+        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE && b[nr][nc] === player) {
+            if (lineFlips.length > 0) {
+                totalFlips.push(...lineFlips);
+            }
+        }
+    }
+
+    return totalFlips;
+}
+
+function getValidMovesOnBoard(b, player) {
+    let moves = [];
+    for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            let flips = getFlipsOnBoard(b, r, c, player);
+            if (flips.length > 0) {
+                moves.push({ r, c, flips });
+            }
+        }
+    }
+    return moves;
+}
+
+function updateGameState() {
+    validMoves = getValidMovesOnBoard(board, currentPlayer);
+    updateScoreUI();
+    drawBoard();
+
+    if (isGameOver) return;
+
+    if (validMoves.length === 0) {
+        const opponent = currentPlayer === 1 ? 2 : 1;
+        const opponentMoves = getValidMovesOnBoard(board, opponent);
+
+        if (opponentMoves.length === 0) {
+            endGame();
+            return;
+        } else {
+            const statusMsg = document.getElementById('status-message');
+            statusMsg.innerText = currentPlayer === 1 ? '유저 패스!' : 'AI 패스!';
+            currentPlayer = opponent;
+            setTimeout(updateGameState, 1000);
+            return;
+        }
+    }
+
+    const statusMsg = document.getElementById('status-message');
+    if (currentPlayer === 1) {
+        statusMsg.innerText = '내 턴입니다';
+    } else {
+        statusMsg.innerText = '마스터 AI 완전 연산 중...';
+        setTimeout(makeAIMove, 500);
+    }
+}
+
+// 종합 평가 함수: 위치 점수 + 개방도(Mobility) 제어
+function evaluateBoardMaster(b, player) {
+    let positionScore = 0;
+    const opponent = player === 1 ? 2 : 1;
+
+    for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            if (b[r][c] === player) {
+                positionScore += WEIGHT_MATRIX[r][c];
+            } else if (b[r][c] === opponent) {
+                positionScore -= WEIGHT_MATRIX[r][c];
+            }
+        }
+    }
+
+    // 개방도(Mobility) 계산: 상대의 둘 수 있는 자리를 줄이는 쪽에 가중치
+    const myMovesCount = getValidMovesOnBoard(b, player).length;
+    const opponentMovesCount = getValidMovesOnBoard(b, opponent).length;
+    let mobilityScore = (myMovesCount - opponentMovesCount) * 15;
+
+    return positionScore + mobilityScore;
+}
+
+function cloneBoard(b) {
+    return b.map(row => [...row]);
+}
+
+// Alpha-Beta Pruning 알고리즘
+function alphaBeta(tempBoard, depth, alpha, beta, isMaximizing, player) {
+    const opponent = player === 1 ? 2 : 1;
+    const targetPlayer = isMaximizing ? player : opponent;
+    const moves = getValidMovesOnBoard(tempBoard, targetPlayer);
+
+    if (depth === 0 || moves.length === 0) {
+        return evaluateBoardMaster(tempBoard, player);
+    }
+
+    if (isMaximizing) {
+        let maxEval = -Infinity;
+        for (let move of moves) {
+            let nextBoard = cloneBoard(tempBoard);
+            nextBoard[move.r][move.c] = player;
+            move.flips.forEach(([fr, fc]) => nextBoard[fr][fc] = player);
+
+            let evalScore = alphaBeta(nextBoard, depth - 1, alpha, beta, false, player);
+            maxEval = Math.max(maxEval, evalScore);
+            alpha = Math.max(alpha, evalScore);
+
+            if (beta <= alpha) break; // Beta 가지치기
+        }
+        return maxEval;
+    } else {
+        let minEval = Infinity;
+        for (let move of moves) {
+            let nextBoard = cloneBoard(tempBoard);
+            nextBoard[move.r][move.c] = opponent;
+            move.flips.forEach(([fr, fc]) => nextBoard[fr][fc] = opponent);
+
+            let evalScore = alphaBeta(nextBoard, depth - 1, alpha, beta, true, player);
+            minEval = Math.min(minEval, evalScore);
+            beta = Math.min(beta, evalScore);
+
+            if (beta <= alpha) break; // Alpha 가지치기
+        }
+        return minEval;
+    }
+}
+
+// 4단계 마스터 AI 착수
+function makeAIMove() {
+    if (isGameOver || currentPlayer !== 2) return;
+
+    if (validMoves.length > 0) {
+        // 남은 빈칸 수 카운트
+        let emptyCount = 0;
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                if (board[r][c] === 0) emptyCount++;
+            }
+        }
+
+        // 종반 완전 탐색 적용: 빈칸이 10개 이하일 땐 끝까지 깊게 탐색
+        const searchDepth = emptyCount <= 10 ? emptyCount : 5;
+
+        let bestScore = -Infinity;
+        let bestMove = validMoves[0];
+
+        for (let move of validMoves) {
+            let nextBoard = cloneBoard(board);
+            nextBoard[move.r][move.c] = 2; // AI = 2
+            move.flips.forEach(([fr, fc]) => nextBoard[fr][fc] = 2);
+
+            let score = alphaBeta(nextBoard, searchDepth, -Infinity, Infinity, false, 2);
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+
+        executeMove(bestMove.r, bestMove.c, bestMove.flips, 2);
+    }
+}
+
+function executeMove(r, c, flips, player) {
+    board[r][c] = player;
+    flips.forEach(([fr, fc]) => {
+        board[fr][fc] = player;
+    });
+
+    currentPlayer = player === 1 ? 2 : 1;
+    updateGameState();
+}
+
+canvas.addEventListener('click', (e) => {
+    if (currentPlayer !== 1 || isGameOver) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const c = Math.floor(x / CELL_SIZE);
+    const r = Math.floor(y / CELL_SIZE);
+
+    const move = validMoves.find(m => m.r === r && m.c === c);
+    if (move) {
+        executeMove(r, c, move.flips, 1);
+    }
+});
+
+function updateScoreUI() {
+    let blackCount = 0;
+    let whiteCount = 0;
+
+    for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            if (board[r][c] === 1) blackCount++;
+            else if (board[r][c] === 2) whiteCount++;
+        }
+    }
+
+    document.getElementById('black-score').innerText = blackCount;
+    document.getElementById('white-score').innerText = whiteCount;
+}
+
+function drawBoard() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            ctx.fillStyle = (r + c) % 2 === 0 ? '#15803d' : '#166534';
+            ctx.fillRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+            ctx.strokeStyle = '#0f5128';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(c * CELL_SIZE, r * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+            if (board[r][c] !== 0) {
+                drawDisc(r, c, board[r][c]);
+            }
+        }
+    }
+
+    if (currentPlayer === 1 && !isGameOver) {
+        validMoves.forEach(m => {
+            ctx.fillStyle = 'rgba(250, 204, 21, 0.6)';
+            ctx.beginPath();
+            ctx.arc((m.c + 0.5) * CELL_SIZE, (m.r + 0.5) * CELL_SIZE, CELL_SIZE * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+}
+
+function drawDisc(r, c, player) {
+    const cx = (c + 0.5) * CELL_SIZE;
+    const cy = (r + 0.5) * CELL_SIZE;
+    const radius = CELL_SIZE * 0.4;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+
+    if (player === 1) {
+        ctx.fillStyle = '#111827';
+        ctx.fill();
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    } else {
+        ctx.fillStyle = '#f9fafb';
+        ctx.fill();
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function endGame() {
+    isGameOver = true;
+    let blackCount = parseInt(document.getElementById('black-score').innerText);
+    let whiteCount = parseInt(document.getElementById('white-score').innerText);
+
+    const modal = document.getElementById('result-modal');
+    const title = document.getElementById('result-title');
+    const desc = document.getElementById('result-desc');
+
+    if (blackCount > whiteCount) {
+        title.innerText = '👑 완벽한 승리!';
+        title.style.color = '#ef4444';
+        desc.innerText = `검은색 ${blackCount}개 vs 흰색 ${whiteCount}개로 마스터 AI를 꺾으셨습니다!`;
+    } else if (whiteCount > blackCount) {
+        title.innerText = '😭 패배';
+        title.style.color = '#ef4444';
+        desc.innerText = `검은색 ${blackCount}개 vs 흰색 ${whiteCount}개로 마스터 AI에게 패배하셨습니다.`;
+    } else {
+        title.innerText = '🤝 무승부';
+        title.style.color = '#facc15';
+        desc.innerText = `검은색 ${blackCount}개 vs 흰색 ${whiteCount}개로 비겼습니다.`;
+    }
+
+    modal.style.display = 'flex';
+}
+
+initGame();
+</script>
+</body>
+</html>

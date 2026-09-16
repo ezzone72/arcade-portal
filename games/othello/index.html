@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오셀로 (Othello) - AI 난이도 선택</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; }
+        
+        header { text-align: center; margin-bottom: 2.5rem; }
+        header h1 { font-size: 2.2rem; color: #38bdf8; margin-bottom: 0.5rem; text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+        header p { font-size: 1rem; color: #94a3b8; }
+
+        .difficulty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; max-width: 1200px; width: 100%; }
+        
+        .card { background: #1e293b; border-radius: 16px; border: 1px solid #334155; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s, border-color 0.2s; position: relative; }
+        .card:hover { transform: translateY(-5px); }
+
+        /* Level Badges */
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 0.85rem; margin-bottom: 1rem; width: fit-content; }
+        .lvl-1 { background: #22c55e; color: #052e16; }
+        .lvl-2 { background: #3b82f6; color: #1e3a8a; }
+        .lvl-3 { background: #f59e0b; color: #451a03; }
+        .lvl-4 { background: #ef4444; color: #450a0a; }
+
+        .card:nth-child(1):hover { border-color: #22c55e; }
+        .card:nth-child(2):hover { border-color: #3b82f6; }
+        .card:nth-child(3):hover { border-color: #f59e0b; }
+        .card:nth-child(4):hover { border-color: #ef4444; }
+
+        .card h3 { font-size: 1.3rem; color: #f8fafc; margin-bottom: 0.5rem; }
+        .card .subtitle { font-size: 0.9rem; color: #38bdf8; font-weight: 600; margin-bottom: 1rem; }
+        .card p { font-size: 0.88rem; color: #94a3b8; line-height: 1.5; margin-bottom: 1.2rem; }
+
+        .algo-box { background: #0f172a; border-radius: 8px; padding: 0.8rem; margin-bottom: 1.5rem; font-size: 0.8rem; color: #cbd5e1; line-height: 1.4; border-left: 3px solid #38bdf8; }
+
+        .btn { display: block; width: 100%; text-align: center; padding: 12px 0; border-radius: 8px; font-weight: bold; text-decoration: none; transition: background 0.2s, color 0.2s; }
+        .btn-1 { background: #22c55e; color: #052e16; } .btn-1:hover { background: #16a34a; color: #fff; }
+        .btn-2 { background: #3b82f6; color: #fff; } .btn-2:hover { background: #2563eb; }
+        .btn-3 { background: #f59e0b; color: #fff; } .btn-3:hover { background: #d97706; }
+        .btn-4 { background: #ef4444; color: #fff; } .btn-4:hover { background: #dc2626; }
+
+        .back-link { margin-top: 2.5rem; color: #64748b; text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+        .back-link:hover { color: #38bdf8; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>⚪ 오셀로 (Othello) AI 대전 🔴</h1>
+    <p>상대할 인공지능(AI)의 난이도를 선택하세요.</p>
+</header>
+
+<div class="difficulty-grid">
+
+    <!-- 1단계 -->
+    <div class="card">
+        <div>
+            <span class="badge lvl-1">1단계</span>
+            <h3>초급 AI</h3>
+            <div class="subtitle">"무작위 탐색 AI"</div>
+            <p>오셀로 룰을 막 배운 상태입니다. 승패 상관없이 무작위 위치에 돌을 놓습니다.</p>
+            <div class="algo-box">
+                💡 <strong>알고리즘:</strong> 100% Random Placement (모서리를 그냥 내어줍니다)
+            </div>
+        </div>
+        <a href="game-level1.html" class="btn btn-1">1단계와 대결하기</a>
+    </div>
+
+    <!-- 2단계 -->
+    <div class="card">
+        <div>
+            <span class="badge lvl-2">2단계</span>
+            <h3>중급 AI</h3>
+            <div class="subtitle">"탐욕적(Greedy) AI"</div>
+            <p>눈앞의 이득을 좇습니다. 이번 턴에 가장 돌을 많이 뒤집는 곳을 찾아 놓습니다.</p>
+            <div class="algo-box">
+                💡 <strong>알고리즘:</strong> Max Flips Heuristic (위험 지역 X/C-Square 약간 회피)
+            </div>
+        </div>
+        <a href="game-level2.html" class="btn btn-2">2단계와 대결하기</a>
+    </div>
+
+    <!-- 3단계 -->
+    <div class="card">
+        <div>
+            <span class="badge lvl-3">3단계</span>
+            <h3>상급 AI</h3>
+            <div class="subtitle">"위치 가중치 + 미니맥스"</div>
+            <p>귀퉁이(+100점) 등 요충지의 가치를 알고, 3~4수 앞을 내다보며 전략을 세웁니다.</p>
+            <div class="algo-box">
+                💡 <strong>알고리즘:</strong> Minimax (Depth 3~4) + Position Weight Matrix
+            </div>
+        </div>
+        <a href="game-level3.html" class="btn btn-3">3단계와 대결하기</a>
+    </div>
+
+    <!-- 4단계 -->
+    <div class="card">
+        <div>
+            <span class="badge lvl-4">4단계</span>
+            <h3>마스터 AI</h3>
+            <div class="subtitle">"개방도 전략 + 알파베타"</div>
+            <p>유저의 둘 수 있는 자리를 줄여 가두고, 종반에는 수만 가지 경로를 끝까지 탐색합니다.</p>
+            <div class="algo-box">
+                💡 <strong>알고리즘:</strong> Alpha-Beta Pruning + Mobility Control + 종반 완전 탐색
+            </div>
+        </div>
+        <a href="game-level4.html" class="btn btn-4">4단계와 대결하기</a>
+    </div>
+
+</div>
+
+<a href="../../index.html" class="back-link">← 메인 오락실 로비로 돌아가기</a>
+
+</body>
+</html>
