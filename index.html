@@ -21,15 +21,11 @@
         
         .badge { position: absolute; top: 15px; right: 15px; background: #38bdf8; color: #0f172a; font-weight: bold; font-size: 0.8rem; padding: 4px 10px; border-radius: 12px; }
         .badge.defense { background: #2ecc71; color: #fff; }
-        .badge.gostop { background: #f59e0b; color: #fff; }
+        .badge.othello { background: #ef4444; color: #fff; }
 
         .card-body { padding: 1.5rem; flex: 1; display: flex; flex-direction: column; }
         .card-body h3 { font-size: 1.4rem; color: #f8fafc; margin-bottom: 0.8rem; }
         .card-body p { font-size: 0.95rem; color: #94a3b8; line-height: 1.6; margin-bottom: 1.2rem; }
-        
-        .feature-list { list-style: none; margin-bottom: 1.5rem; flex: 1; }
-        .feature-list li { font-size: 0.88rem; color: #cbd5e1; margin-bottom: 0.5rem; position: relative; padding-left: 18px; line-height: 1.4; }
-        .feature-list li::before { content: "•"; color: #38bdf8; position: absolute; left: 0; font-weight: bold; }
 
         .btn { display: inline-block; width: 100%; text-align: center; background: #38bdf8; color: #0f172a; font-weight: bold; padding: 12px 0; border-radius: 8px; text-decoration: none; transition: background 0.2s; }
         .btn:hover { background: #0284c7; color: #fff; }
@@ -68,13 +64,13 @@
             </div>
         </div>
 
-        <!-- 3. 신의 한 수: 맞고 -->
+        <!-- 3. 오셀로 AI 챌린지 -->
         <div class="game-card">
-            <span class="badge gostop">v1.0 NEW</span>
+            <span class="badge othello">v1.0 NEW</span>
             <div class="card-body">
-                <h3>🎴 신의 한 수: 1대1 한판 맞고</h3>
-                <p>인공지능 AI와 즐기는 화려한 무늬의 1대1 한판 맞고(고스톱) 보드게임입니다.</p>
-                <a href="games/gostop/index.html" class="btn">지금 플레이하기</a>
+                <h3>⚪ 오셀로 (Othello) AI 챌린지 🔴</h3>
+                <p>1단계 초급 무작위 탐색부터 4단계 Alpha-Beta 완전 탐색 마스터 AI까지 도전해보세요!</p>
+                <a href="games/othello/index.html" class="btn">지금 플레이하기</a>
             </div>
         </div>
 
