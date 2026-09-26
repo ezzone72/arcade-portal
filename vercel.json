@@ -1,5 +1,3 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/games/JOBDA/index.html" }
-  ]
+  "outputDirectory": "games/JOBDA"
 }
