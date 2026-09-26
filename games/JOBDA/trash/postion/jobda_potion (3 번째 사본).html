@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 역량검사 - 마법약 만들기 (고정 규칙 추론 모듈)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+        .game-card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 440px;
+        }
+        .top-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .mode-toggle-btn {
+            background: #e2e8f0;
+            color: #2b3a4a;
+            border: 1px solid #cbd5e0;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .mode-toggle-btn.practice {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        .timer-gauge-bg {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .timer-gauge-fill {
+            height: 100%;
+            width: 100%;
+            background: #dc3545;
+        }
+
+        .game-stage {
+            background: #2b3a4a;
+            border-radius: 12px;
+            padding: 18px;
+            margin: 15px 0;
+            color: white;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .rule-hint-box {
+            font-size: 12px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            color: #ffc107;
+            font-weight: bold;
+        }
+        .target-potion {
+            font-size: 22px;
+            font-weight: bold;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: inline-block;
+            color: #00d2ff;
+        }
+
+        .ingredient-panel {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .ing-btn {
+            flex: 1;
+            padding: 10px 4px;
+            font-size: 12px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #4a5568;
+            color: white;
+            transition: background 0.2s;
+        }
+        .ing-btn:hover:not(:disabled) { background: #718096; }
+        
+        .selected-slots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            min-height: 38px;
+            align-items: center;
+            background: #1a232a;
+            border-radius: 8px;
+            padding: 6px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #cbd5e0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button.game-action-btn {
+            flex: 1;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+        }
+        .btn-brew { background-color: #28a745; }
+        .btn-reset { background-color: #6c757d; }
+
+        .btn-start, .btn-review {
+            width: 100%;
+            padding: 14px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-start { background-color: #007bff; color: white; }
+        .btn-review { background-color: #17a2b8; color: white; display: none; }
+
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .result-msg { height: 28px; margin-top: 10px; font-size: 18px; font-weight: bold; }
+
+        /* 복기 모달 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 420px;
+            max-height: 85vh;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .modal-content h3 { margin-top: 0; color: #2b3a4a; text-align: center; }
+        
+        .review-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: 5px solid #dc3545;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .review-card .round-title { font-weight: bold; color: #333; margin-bottom: 4px; }
+        .review-card .detail { margin: 3px 0; color: #555; }
+        .review-card .feedback { color: #0056b3; font-weight: bold; margin-top: 6px; background: #eef5ff; padding: 6px; border-radius: 4px; }
+        
+        .close-btn {
+            width: 100%;
+            padding: 10px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <div class="top-tools">
+        <span>잡다 마법약 만들기 (고정 규칙 추론)</span>
+        <button class="mode-toggle-btn" id="mode-btn" onclick="togglePracticeMode()">🔥 실전 모드 (35초)</button>
+    </div>
+
+    <div class="info-bar">
+        <span>진행: <span id="current-step">0</span> / 10</span>
+        <span>점수: <span id="score">0</span></span>
+    </div>
+
+    <div class="timer-gauge-bg">
+        <div class="timer-gauge-fill" id="timer-gauge"></div>
+    </div>
+
+    <div class="game-stage">
+        <div class="rule-hint-box" id="rule-hint-box">🧪 이번 판의 재료 가중치는 10문항 동안 일정합니다. 실험을 통해 규칙을 파악하세요!</div>
+        <div class="target-potion" id="target-display">목표 붉은기: ?, 푸른기: ?</div>
+        
+        <div class="selected-slots" id="selected-slots">
+            재료를 선택하세요 (총 3개 조합)
+        </div>
+
+        <div class="ingredient-panel">
+            <button class="ing-btn" onclick="addIngredient('A')">붉은초 (A)</button>
+            <button class="ing-btn" onclick="addIngredient('B')">푸른버섯 (B)</button>
+            <button class="ing-btn" onclick="addIngredient('C')">황금가루 (C)</button>
+        </div>
+    </div>
+
+    <div class="result-msg" id="result-msg"></div>
+
+    <div class="btn-group">
+        <button class="game-action-btn btn-reset" onclick="resetSlots()" id="btn-reset" disabled>다시 선택</button>
+        <button class="game-action-btn btn-brew" onclick="brewPotion()" id="btn-brew" disabled>물약 제조하기</button>
+    </div>
+
+    <button class="btn-start" id="btn-start" onclick="startGame()">테스트 시작 (10문항)</button>
+    <button class="btn-review" id="btn-review" onclick="toggleModal(true)">📋 추론 피드백 복기 리포트</button>
+</div>
+
+<div class="modal-overlay" id="review-modal">
+    <div class="modal-content">
+        <h3>📋 전체 게임 가중치 및 전략 피드백</h3>
+        <div id="review-list"></div>
+        <button class="close-btn" onclick="toggleModal(false)">닫기</button>
+    </div>
+</div>
+
+<script>
+    const totalRounds = 10;
+    let currentRound = 0;
+    let score = 0;
+    let timer = null;
+    let timeLimitMs = 35000; // 실전 35초
+    let isPracticeMode = false;
+
+    let selectedIngredients = [];
+    let currentTarget = { red: 0, blue: 0 };
+    let gameWeights = {}; // 이번 게임 전체(10문항) 동안 유지될 고정 가중치
+    let wrongQuestions = [];
+
+    // 게임 시작 시 랜덤으로 선정될 수 있는 가중치 마스터 풀
+    const masterWeightPools = [
+        { A: {red:2, blue:0}, B: {red:0, blue:2}, C: {red:1, blue:1} },
+        { A: {red:3, blue:0}, B: {red:0, blue:2}, C: {red:1, blue:1} },
+        { A: {red:2, blue:1}, B: {red:1, blue:2}, C: {red:1, blue:1} },
+        { A: {red:1, blue:2}, B: {red:2, blue:0}, C: {red:1, blue:1} },
+        { A: {red:2, blue:0}, B: {red:1, blue:1}, C: {red:0, blue:2} }
+    ];
+
+    function togglePracticeMode() {
+        if (currentRound > 0 && currentRound < totalRounds) return;
+        isPracticeMode = !isPracticeMode;
+        const btn = document.getElementById('mode-btn');
+
+        if (isPracticeMode) {
+            timeLimitMs = 60000; // 연습 모드 60초
+            btn.innerText = "⚡ 연습 모드 (60초)";
+            btn.classList.add('practice');
+        } else {
+            timeLimitMs = 35000;
+            btn.innerText = "🔥 실전 모드 (35초)";
+            btn.classList.remove('practice');
+        }
+    }
+
+    function resetTimerGauge() {
+        const gauge = document.getElementById('timer-gauge');
+        gauge.style.transition = 'none';
+        gauge.style.width = '100%';
+        void gauge.offsetWidth;
+        gauge.style.transition = `width ${timeLimitMs / 1000}s linear`;
+        gauge.style.width = '0%';
+    }
+
+    function startGame() {
+        currentRound = 0;
+        score = 0;
+        wrongQuestions = [];
+        document.getElementById('score').innerText = score;
+        document.getElementById('btn-start').disabled = true;
+        document.getElementById('mode-btn').disabled = true;
+        document.getElementById('btn-review').style.display = 'none';
+
+        // [핵심] 게임 시작 시 이번 10문항 전체에 적용될 단 하나의 고정 가중치를 결정합니다.
+        gameWeights = masterWeightPools[Math.floor(Math.random() * masterWeightPools.length)];
+
+        nextRound();
+    }
+
+    function nextRound() {
+        if (currentRound >= totalRounds) {
+            endGame();
+            return;
+        }
+
+        currentRound++;
+        selectedIngredients = [];
+        updateSlotsUI();
+        document.getElementById('current-step').innerText = currentRound;
+        document.getElementById('result-msg').innerText = "";
+
+        // 고정된 gameWeights를 바탕으로 정확히 떨어지는 3개 조합 생성
+        const keys = ['A', 'B', 'C'];
+        let combo = [];
+        let r = 0, b = 0;
+        for (let i = 0; i < 3; i++) {
+            let pick = keys[Math.floor(Math.random() * keys.length)];
+            combo.push(pick);
+            r += gameWeights[pick].red;
+            b += gameWeights[pick].blue;
+        }
+
+        currentTarget = {
+            red: r,
+            blue: b,
+            correctCombo: combo.sort()
+        };
+
+        document.getElementById('target-display').innerText = `🎯 목표 수치 -> 붉은기: ${r}, 푸른기: ${b}`;
+
+        setControlsEnabled(true);
+        resetTimerGauge();
+
+        timer = setTimeout(() => {
+            handleTimeout();
+        }, timeLimitMs);
+    }
+
+    function setControlsEnabled(enabled) {
+        document.getElementById('btn-brew').disabled = !enabled;
+        document.getElementById('btn-reset').disabled = !enabled;
+    }
+
+    function addIngredient(ing) {
+        if (selectedIngredients.length < 3) {
+            selectedIngredients.push(ing);
+            updateSlotsUI();
+        }
+    }
+
+    function resetSlots() {
+        selectedIngredients = [];
+        updateSlotsUI();
+    }
+
+    function updateSlotsUI() {
+        const slotEl = document.getElementById('selected-slots');
+        const names = { 'A': '붉은초(A)', 'B': '푸른버섯(B)', 'C': '황금가루(C)' };
+        if (selectedIngredients.length === 0) {
+            slotEl.innerText = "재료를 선택하세요 (총 3개 조합)";
+        } else {
+            slotEl.innerText = selectedIngredients.map(i => names[i]).join(' + ');
+        }
+    }
+
+    function handleTimeout() {
+        setControlsEnabled(false);
+        document.getElementById('result-msg').innerText = "⏱️ 시간 초과!";
+        document.getElementById('result-msg').style.color = "orange";
+
+        const names = { 'A': '붉은초(A)', 'B': '푸른버섯(B)', 'C': '황금가루(C)' };
+        wrongQuestions.push({
+            round: currentRound,
+            target: currentTarget,
+            gameWeights: gameWeights,
+            userChoice: "시간 초과",
+            correctComboStr: currentTarget.correctCombo.map(i => names[i]).join(' + '),
+            feedback: `제한 시간 내에 이번 판의 고정 가중치 규칙을 유추하고 역산하지 못했습니다. 앞선 문항들의 정답과 조합을 기억하며 각 재료의 기여도를 빠르게 파악하는 연습이 필요합니다.`
+        });
+
+        setTimeout(nextRound, 1000);
+    }
+
+    function brewPotion() {
+        if (selectedIngredients.length < 3) return;
+        clearTimeout(timer);
+        setControlsEnabled(false);
+
+        const userSorted = [...selectedIngredients].sort();
+        const targetSorted = [...currentTarget.correctCombo].sort();
+
+        const isMatch = JSON.stringify(userSorted) === JSON.stringify(targetSorted);
+        const names = { 'A': '붉은초(A)', 'B': '푸른버섯(B)', 'C': '황금가루(C)' };
+
+        if (isMatch) {
+            score += 10;
+            document.getElementById('result-msg').innerText = "⭕ 정답!";
+            document.getElementById('result-msg').style.color = "#28a745";
+        } else {
+            document.getElementById('result-msg').innerText = "❌ 오답!";
+            document.getElementById('result-msg').style.color = "#dc3545";
+
+            wrongQuestions.push({
+                round: currentRound,
+                target: currentTarget,
+                gameWeights: gameWeights,
+                userChoice: selectedIngredients.map(i => names[i]).join(' + '),
+                correctComboStr: currentTarget.correctCombo.map(i => names[i]).join(' + '),
+                feedback: `이번 판의 고정 규칙[A(붉은${gameWeights.A.red}/푸른${gameWeights.A.blue}), B(붉은${gameWeights.B.red}/푸른${gameWeights.B.blue}), C(붉은${gameWeights.C.red}/푸른${gameWeights.C.blue})]을 바탕으로 목표치(${currentTarget.red}, ${currentTarget.blue})를 역산하는 과정에서 오차가 발생했습니다. 초반 문항에서 파악한 가중치 데이터를 메모하거나 머릿속에 고정해 두고 다음 문항에 적용해 보세요.`
+            });
+        }
+
+        document.getElementById('score').innerText = score;
+        setTimeout(nextRound, 800);
+    }
+
+    function endGame() {
+        clearTimeout(timer);
+        const gauge = document.getElementById('timer-gauge');
+        gauge.style.transition = 'none';
+        gauge.style.width = '0%';
+
+        document.getElementById('result-msg').innerText = `테스트 종료! 최종 점수: ${score}점`;
+        document.getElementById('result-msg').style.color = "#007bff";
+        document.getElementById('btn-start').disabled = false;
+        document.getElementById('mode-btn').disabled = false;
+
+        if (wrongQuestions.length > 0) {
+            document.getElementById('btn-review').style.display = 'block';
+        } else {
+            document.getElementById('result-msg').innerText += " (만점!)";
+        }
+    }
+
+    function renderReviewList() {
+        const container = document.getElementById('review-list');
+        container.innerHTML = "";
+
+        // 복기 리포트 상단에 이번 게임 전체에 적용되었던 '실제 정답 가중치 규칙'을 공개하여 학습을 도움
+        const summaryCard = document.createElement('div');
+        summaryCard.className = 'review-card';
+        summaryCard.style.borderLeftColor = '#007bff';
+        summaryCard.innerHTML = `
+            <div class="round-title">🔍 이번 게임 전체 적용 규칙 (정답 가중치)</div>
+            <div class="detail">· <b>붉은초(A)</b>: 붉은기 ${gameWeights.A.red}, 푸른기 ${gameWeights.A.blue}</div>
+            <div class="detail">· <b>푸른버섯(B)</b>: 붉은기 ${gameWeights.B.red}, 푸른기 ${gameWeights.B.blue}</div>
+            <div class="detail">· <b>황금가루(C)</b>: 붉은기 ${gameWeights.C.red}, 푸른기 ${gameWeights.C.blue}</div>
+        `;
+        container.appendChild(summaryCard);
+
+        wrongQuestions.forEach((item) => {
+            const card = document.createElement('div');
+            card.className = 'review-card';
+            card.innerHTML = `
+                <div class="round-title">📌 문제 ${item.round}번 오답 분석</div>
+                <div class="detail">· 목표 속성: 붉은기 ${item.target.red}, 푸른기 ${item.target.blue}</div>
+                <div class="detail">· 내가 고른 조합: <b>${item.userChoice}</b></div>
+                <div class="detail">· 정답 조합: <b style="color:#28a745">${item.correctComboStr}</b></div>
+                <div class="feedback">💡 역산 추론 팁: ${item.feedback}</div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function toggleModal(show) {
+        if (show) renderReviewList();
+        document.getElementById('review-modal').style.display = show ? 'flex' : 'none';
+    }
+</script>
+
+</body>
+</html>

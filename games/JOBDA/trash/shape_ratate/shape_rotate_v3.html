@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 역량검사 - 도형 회전하기 (대칭 도형 채점 오류 수정 완료)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+        .game-card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 440px;
+        }
+        .top-tools {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .mode-toggle-btn {
+            background: #e2e8f0;
+            color: #2b3a4a;
+            border: 1px solid #cbd5e0;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .mode-toggle-btn.practice {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        .timer-gauge-bg {
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .timer-gauge-fill {
+            height: 100%;
+            width: 100%;
+            background: #dc3545;
+        }
+
+        .shape-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            gap: 15px;
+        }
+        .shape-box {
+            width: 190px;
+            height: 190px;
+            background: #2b3a4a;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .shape-title {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            font-size: 11px;
+            color: #a0aec0;
+            font-weight: bold;
+        }
+
+        .step-change {
+            animation: pulseBlink 0.12s ease-in-out;
+        }
+        @keyframes pulseBlink {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.9); opacity: 0.2; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        button.game-btn {
+            flex: 1;
+            padding: 16px 10px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.05s;
+        }
+        button.game-btn:active:not(:disabled) { transform: scale(0.94); }
+        .btn-match { background-color: #28a745; }
+        .btn-differ { background-color: #dc3545; }
+        
+        .btn-start, .btn-review {
+            width: 100%;
+            padding: 14px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-start { background-color: #007bff; color: white; }
+        .btn-review { background-color: #17a2b8; color: white; display: none; }
+
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .result-msg { height: 28px; margin-top: 10px; font-size: 18px; font-weight: bold; }
+        .key-hint { font-size: 11px; color: #718096; margin-top: 8px; }
+
+        /* 오답 모달 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 410px;
+            max-height: 85vh;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .modal-content h3 { margin-top: 0; color: #2b3a4a; text-align: center; }
+        
+        .review-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: 5px solid #dc3545;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+        .review-card .round-title { font-weight: bold; color: #333; margin-bottom: 6px; }
+        .review-canvas-group {
+            display: flex;
+            justify-content: space-around;
+            background: #2b3a4a;
+            border-radius: 8px;
+            padding: 8px 0;
+            margin: 8px 0;
+        }
+        .review-canvas-item { text-align: center; }
+        .review-canvas-item span { display: block; font-size: 10px; color: #a0aec0; margin-bottom: 4px; }
+        .review-card .answer-info { margin: 4px 0; }
+        .review-card .reason { color: #d9534f; font-weight: bold; margin-top: 6px; }
+        
+        .close-btn {
+            width: 100%;
+            padding: 10px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <div class="top-tools">
+        <span>도형 회전하기</span>
+        <button class="mode-toggle-btn" id="mode-btn" onclick="togglePracticeMode()">🔥 실전 모드 (1.5초)</button>
+    </div>
+
+    <div class="info-bar">
+        <span>진행: <span id="current-step">0</span> / 30</span>
+        <span>점수: <span id="score">0</span></span>
+    </div>
+
+    <div class="timer-gauge-bg">
+        <div class="timer-gauge-fill" id="timer-gauge"></div>
+    </div>
+
+    <div class="shape-container" id="shape-container">
+        <div class="shape-box">
+            <span class="shape-title">기준 도형</span>
+            <canvas id="canvas-base" width="150" height="150"></canvas>
+        </div>
+        <div class="shape-box">
+            <span class="shape-title">비교 도형</span>
+            <canvas id="canvas-target" width="150" height="150"></canvas>
+        </div>
+    </div>
+
+    <div class="result-msg" id="result-msg"></div>
+
+    <div class="btn-group">
+        <button class="game-btn btn-match" id="btn-match" onclick="checkAnswer(true)" disabled>회전 일치 (←)</button>
+        <button class="game-btn btn-differ" id="btn-differ" onclick="checkAnswer(false)" disabled>반전 불일치 (→)</button>
+    </div>
+
+    <button class="btn-start" id="btn-start" onclick="startGame()">테스트 시작 (30문항)</button>
+    <button class="btn-review" id="btn-review" onclick="toggleModal(true)">📋 틀린 문제 시각 복기하기</button>
+    <div class="key-hint">키보드 단축키: [왼쪽 화살표 = 일치] / [오른쪽 화살표 = 불일치]</div>
+</div>
+
+<div class="modal-overlay" id="review-modal">
+    <div class="modal-content">
+        <h3>📋 틀린 문제 시각 복기 리포트</h3>
+        <div id="review-list"></div>
+        <button class="close-btn" onclick="toggleModal(false)">닫기</button>
+    </div>
+</div>
+
+<script>
+    const totalRounds = 30;
+    let currentRound = 0;
+    let score = 0;
+    let timer = null;
+    let answered = false;
+    let isCurrentMatch = false;
+
+    let isPracticeMode = false;
+    let timeLimitMs = 1500;
+
+    let currentRoundData = {};
+    let wrongQuestions = [];
+
+    const shapePresets = [
+        [[0,1],[0,2],[1,1],[2,1],[2,2],[3,1]],
+        [[0,1],[0,2],[1,1],[2,1],[2,2],[3,1],[3,2]],
+        [[0,2],[1,2],[2,2],[3,2],[3,1],[3,0]],
+        [[0,1],[1,1],[2,1],[3,1],[3,2],[3,3]],
+        [[0,1],[0,2],[1,1],[1,2],[2,1],[3,1]],
+        [[0,1],[0,2],[1,1],[1,2],[2,1],[2,2],[3,1],[3,2]],
+        [[0,1],[0,2],[1,1],[1,2],[2,1],[2,2],[3,2]],
+        [[0,2],[1,2],[2,2],[2,3],[2,4]],
+        [[1,1],[1,2],[1,3],[2,2],[3,2]],
+        [[0,1],[1,1],[1,2],[2,2],[2,3]],
+        [[1,1],[1,2],[2,1],[2,2],[3,2]],
+        [[0,2],[1,2],[2,2],[2,1],[0,1]],
+        [[1,1],[1,2],[1,3],[2,1],[3,1]],
+        [[0,2],[1,1],[1,2],[1,3],[2,2]],
+        [[0,1],[1,1],[2,1],[3,1],[3,2],[3,3]],
+        [[1,2],[2,1],[2,2],[2,3],[3,2]],
+        [[0,1],[0,2],[1,2],[2,2],[2,3]],
+        [[1,1],[2,1],[2,2],[2,3],[1,3]],
+        [[0,1],[1,1],[1,2],[2,2],[3,2],[3,1]],
+        [[0,2],[1,1],[1,2],[2,2],[3,2],[3,3]]
+    ];
+
+    function togglePracticeMode() {
+        if (currentRound > 0 && currentRound < totalRounds) return;
+
+        isPracticeMode = !isPracticeMode;
+        const btn = document.getElementById('mode-btn');
+
+        if (isPracticeMode) {
+            timeLimitMs = 5000;
+            btn.innerText = "⚡ 연습 모드 (5초)";
+            btn.classList.add('practice');
+        } else {
+            timeLimitMs = 1500;
+            btn.innerText = "🔥 실전 모드 (1.5초)";
+            btn.classList.remove('practice');
+        }
+    }
+
+    // 매트릭스 좌표 변환 유틸리티 (회전 및 반전 연산 시뮬레이션)
+    function transformMatrix(matrix, angleDeg, isFlipped) {
+        // 1. 중심점 기준 좌표 변환 시뮬레이션
+        // 4x4 그리드 중심(1.5, 1.5) 또는 정수 좌표계 기준 변환
+        const rad = (angleDeg * Math.PI) / 180;
+        const cos = Math.round(Math.cos(rad));
+        const sin = Math.round(Math.sin(rad));
+
+        let transformed = matrix.map(([r, c]) => {
+            // 중심 맞추기 위해 [-1.5, 1.5] 좌표계로 이동 후 회전/반전
+            let nc = c - 1.5;
+            let nr = r - 1.5;
+
+            if (isFlipped) {
+                nc = -nc;
+            }
+
+            // 회전 변환
+            let finalC = nc * cos - nr * sin;
+            let finalR = nc * sin + nr * cos;
+
+            // 다시 원래 그리드 좌표계로 복원
+            return [Math.round(finalR + 1.5), Math.round(finalC + 1.5)];
+        });
+
+        // 정렬하여 고유 문자열 키로 변환 (모양 비교용)
+        transformed.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+        return JSON.stringify(transformed);
+    }
+
+    // 대칭 도형 등으로 인해 반전을 가했어도 결과적으로 회전만으로 겹쳐지는지 검증하는 함수
+    function checkRealMatch(preset, targetAngle, isFlipped) {
+        const baseKey = transformMatrix(preset, 0, false);
+        
+        // 만약 반전이 적용되었다 하더라도, 회전 각도(0, 45, 90, 135, 180, 225, 270, 315) 중
+        // 원본(base)과 완전히 일치하는 형태가 존재한다면 실제로는 '회전 일치'임!
+        const possibleAngles = [0, 45, 90, 135, 180, 225, 270, 315];
+        
+        // 타겟이 만들어진 실제 상태
+        const targetKey = transformMatrix(preset, targetAngle, isFlipped);
+
+        // 만약 targetKey가 회전만 한 상태들 중 하나와 일치한다면 대칭성 때문에 회전 일치로 판정
+        for (let ang of possibleAngles) {
+            if (transformMatrix(preset, ang, false) === targetKey) {
+                return true; // 회전만으로 가능한 형태임 (실제 일치)
+            }
+        }
+
+        // 정말로 반전이 되어 회전만으로는 겹칠 수 없는 경우
+        return !isFlipped;
+    }
+
+    function drawGridShape(canvas, matrix, angleDegree, isFlipped, scaleMultiplier = 1) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        
+        ctx.rotate((angleDegree * Math.PI) / 180);
+        if (isFlipped) {
+            ctx.scale(-1, 1);
+        }
+
+        const cellSize = 18 * scaleMultiplier;
+        const offset = (4 * cellSize) / 2;
+
+        ctx.fillStyle = '#00d2ff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2 * scaleMultiplier;
+
+        matrix.forEach(([r, c]) => {
+            const x = c * cellSize - offset;
+            const y = r * cellSize - offset;
+            ctx.fillRect(x, y, cellSize - 1, cellSize - 1);
+            ctx.strokeRect(x, y, cellSize - 1, cellSize - 1);
+        });
+
+        ctx.restore();
+    }
+
+    function resetTimerGauge() {
+        const gauge = document.getElementById('timer-gauge');
+        gauge.style.transition = 'none';
+        gauge.style.width = '100%';
+        void gauge.offsetWidth;
+        gauge.style.transition = `width ${timeLimitMs / 1000}s linear`;
+        gauge.style.width = '0%';
+    }
+
+    function startGame() {
+        currentRound = 0;
+        score = 0;
+        wrongQuestions = [];
+        document.getElementById('score').innerText = score;
+        document.getElementById('btn-start').disabled = true;
+        document.getElementById('mode-btn').disabled = true;
+        document.getElementById('btn-review').style.display = 'none';
+        nextRound();
+    }
+
+    function nextRound() {
+        if (currentRound >= totalRounds) {
+            endGame();
+            return;
+        }
+
+        currentRound++;
+        answered = false;
+        document.getElementById('current-step').innerText = currentRound;
+        document.getElementById('result-msg').innerText = "";
+
+        const container = document.getElementById('shape-container');
+        container.classList.remove('step-change');
+        void container.offsetWidth;
+        container.classList.add('step-change');
+
+        const preset = shapePresets[Math.floor(Math.random() * shapePresets.length)];
+        const rawIsFlipped = Math.random() < 0.5;
+
+        const angles = [45, 90, 135, 180, 225, 270, 315];
+        const randomAngle = angles[Math.floor(Math.random() * angles.length)];
+        
+        // ★ 핵심 수정: 대칭성 검증을 통해 실질적인 정답 여부 결정
+        const actualMatch = checkRealMatch(preset, randomAngle, rawIsFlipped);
+
+        const baseCanvas = document.getElementById('canvas-base');
+        const targetCanvas = document.getElementById('canvas-target');
+
+        drawGridShape(baseCanvas, preset, 0, false);
+        drawGridShape(targetCanvas, preset, randomAngle, rawIsFlipped);
+
+        currentRoundData = {
+            round: currentRound,
+            preset: preset,
+            angle: randomAngle,
+            isFlipped: rawIsFlipped,
+            correctAnswer: actualMatch // 정확하게 판정된 정답 적용
+        };
+
+        isCurrentMatch = actualMatch;
+
+        document.getElementById('btn-match').disabled = false;
+        document.getElementById('btn-differ').disabled = false;
+
+        resetTimerGauge();
+
+        timer = setTimeout(() => {
+            if (!answered) {
+                document.getElementById('result-msg').innerText = "⏱️ 시간 초과!";
+                document.getElementById('result-msg').style.color = "orange";
+                
+                wrongQuestions.push({
+                    ...currentRoundData,
+                    userAnswer: "시간 초과",
+                    reason: `제한시간(${timeLimitMs / 1000}초) 내에 반응하지 못했습니다.`
+                });
+            }
+            nextRound();
+        }, timeLimitMs);
+    }
+
+    function checkAnswer(userSaysMatch) {
+        if (answered) return;
+        answered = true;
+        clearTimeout(timer);
+
+        document.getElementById('btn-match').disabled = true;
+        document.getElementById('btn-differ').disabled = true;
+
+        if (userSaysMatch === isCurrentMatch) {
+            score += 10;
+            document.getElementById('result-msg').innerText = "⭕ 정답!";
+            document.getElementById('result-msg').style.color = "#28a745";
+        } else {
+            document.getElementById('result-msg').innerText = "❌ 오답!";
+            document.getElementById('result-msg').style.color = "#dc3545";
+
+            const reasonText = !isCurrentMatch 
+                ? `대각선 회전뿐만 아니라 [좌우 반전(Flip)]이 포함되어 불일치입니다.` 
+                : `도형의 대칭성으로 인해 회전만으로 일치시킬 수 있는 도형입니다.`;
+
+            wrongQuestions.push({
+                ...currentRoundData,
+                userAnswer: userSaysMatch ? "회전 일치" : "반전 불일치",
+                reason: reasonText
+            });
+        }
+
+        document.getElementById('score').innerText = score;
+        setTimeout(nextRound, 300);
+    }
+
+    function endGame() {
+        clearTimeout(timer);
+        const gauge = document.getElementById('timer-gauge');
+        gauge.style.transition = 'none';
+        gauge.style.width = '0%';
+
+        document.getElementById('result-msg').innerText = `테스트 종료! 최종 점수: ${score}점`;
+        document.getElementById('result-msg').style.color = "#007bff";
+        document.getElementById('btn-start').disabled = false;
+        document.getElementById('mode-btn').disabled = false;
+
+        if (wrongQuestions.length > 0) {
+            document.getElementById('btn-review').style.display = 'block';
+        } else {
+            document.getElementById('result-msg').innerText += " (만점!)";
+        }
+    }
+
+    function renderReviewList() {
+        const container = document.getElementById('review-list');
+        container.innerHTML = "";
+
+        wrongQuestions.forEach((item, idx) => {
+            const card = document.createElement('div');
+            card.className = 'review-card';
+            
+            const correctText = item.correctAnswer ? "회전 일치" : "반전 불일치";
+            const baseCanvasId = `review-base-${idx}`;
+            const targetCanvasId = `review-target-${idx}`;
+
+            card.innerHTML = `
+                <div class="round-title">📌 문제 ${item.round}번 복기</div>
+                <div class="review-canvas-group">
+                    <div class="review-canvas-item">
+                        <span>기준 도형</span>
+                        <canvas id="${baseCanvasId}" width="110" height="110"></canvas>
+                    </div>
+                    <div class="review-canvas-item">
+                        <span>비교 도형 (${item.angle}° ${item.isFlipped ? '+ 반전' : ''})</span>
+                        <canvas id="${targetCanvasId}" width="110" height="110"></canvas>
+                    </div>
+                </div>
+                <div class="answer-info">· 내 선택: <b>${item.userAnswer}</b></div>
+                <div class="answer-info">· 정답: <b style="color:#28a745">${correctText}</b></div>
+                <div class="reason">💡 분석: ${item.reason}</div>
+            `;
+            container.appendChild(card);
+
+            setTimeout(() => {
+                const cvsBase = document.getElementById(baseCanvasId);
+                const cvsTarget = document.getElementById(targetCanvasId);
+                if (cvsBase && cvsTarget) {
+                    drawGridShape(cvsBase, item.preset, 0, false, 0.65);
+                    drawGridShape(cvsTarget, item.preset, item.angle, item.isFlipped, 0.65);
+                }
+            }, 50);
+        });
+    }
+
+    function toggleModal(show) {
+        if (show) renderReviewList();
+        document.getElementById('review-modal').style.display = show ? 'flex' : 'none';
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (document.getElementById('btn-match').disabled) return;
+        if (e.key === 'ArrowLeft') checkAnswer(true);
+        if (e.key === 'ArrowRight') checkAnswer(false);
+    });
+</script>
+
+</body>
+</html>

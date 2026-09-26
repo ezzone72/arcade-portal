@@ -1,0 +1,15 @@
+{
+  "name": "jobda-9game",
+  "version": "1.0.0",
+  "description": "JOBDA AI 9종 역량검사 마스터 시뮬레이터",
+  "main": "main.js",
+  "author": "aisojang",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0"
+  }
+}

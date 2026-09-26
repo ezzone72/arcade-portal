@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOBDA 역량검사 N-Back 실전 완벽 시뮬레이터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            user-select: none;
+        }
+        .keycap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-bottom-width: 3px;
+            border-radius: 0.5rem;
+            color: #475569;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-slate-50">
+
+    <header class="w-full max-w-4xl mx-auto px-6 py-5 flex justify-between items-center border-b border-slate-200">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md">J</div>
+            <div>
+                <h1 class="text-lg font-bold text-slate-800 tracking-tight">JOBDA 역량검사</h1>
+                <p class="text-xs text-slate-500">N-Back 실전 완벽 시뮬레이터</p>
+            </div>
+        </div>
+        <div id="status-badge" class="px-3.5 py-1.5 bg-slate-200/70 border border-slate-300 rounded-full text-xs font-semibold text-slate-700">
+            대기 중
+        </div>
+    </header>
+
+    <main class="w-full max-w-3xl mx-auto my-auto px-4 py-6 flex flex-col items-center justify-center">
+
+        <!-- Intro Screen -->
+        <div id="screen-intro" class="w-full bg-white border border-slate-200 rounded-3xl p-8 shadow-xl text-center max-w-xl">
+            <div class="inline-flex p-4 bg-indigo-50 text-indigo-600 rounded-2xl mb-5 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012-2m-6 9l2 2 4-4" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">N-Back 실전 모의고사</h2>
+            <p class="text-slate-500 text-sm mb-6 leading-relaxed">
+                각 라운드당 <strong>20문제</strong> 구성. 입력 시 정오답 표시가 즉시 나타나지 않으며, 시험 종료 후 라운드별 상세 오답 분석을 제공합니다.
+            </p>
+
+            <div class="bg-slate-50 rounded-2xl p-5 text-left text-sm mb-6 space-y-3 border border-slate-200">
+                <div class="font-semibold text-indigo-600 mb-1 flex items-center gap-1">
+                    <span>⌨️ 실전 키보드 조작 안내</span>
+                </div>
+                <div class="flex items-center justify-between"><span class="text-slate-600 font-medium">라운드 1 (같음 / 2번째 전)</span> <span class="keycap">← 좌 화살표</span></div>
+                <div class="flex items-center justify-between"><span class="text-slate-600 font-medium">라운드 2 (2번째 전 일치)</span> <span class="keycap">← 좌 화살표</span></div>
+                <div class="flex items-center justify-between"><span class="text-slate-600 font-medium">라운드 2 (3번째 전 일치)</span> <span class="keycap">→ 우 화살표</span></div>
+                <div class="flex items-center justify-between"><span class="text-slate-600 font-medium">둘 다 아님 (다름 / SPACE)</span> <span class="keycap">Space 스페이스바</span></div>
+            </div>
+
+            <button onclick="startSimulation()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition font-bold text-white rounded-2xl text-lg shadow-lg shadow-indigo-600/20">
+                테스트 시작하기
+            </button>
+        </div>
+
+        <!-- Transition Screen (Between Round 1 & Round 2) -->
+        <div id="screen-transition" class="w-full bg-white border border-slate-200 rounded-3xl p-8 shadow-xl text-center max-w-xl hidden">
+            <div class="inline-flex p-4 bg-amber-50 text-amber-600 rounded-2xl mb-5 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">라운드 1 완료</h2>
+            <p class="text-slate-500 text-sm mb-6">잠시 휴식 후 라운드 2(3지선다)가 시작됩니다.</p>
+            
+            <div class="my-6">
+                <div id="countdown-number" class="text-5xl font-extrabold text-indigo-600 mb-2">10</div>
+                <p class="text-xs text-slate-400">초 후 자동으로 시작됩니다.</p>
+            </div>
+
+            <button onclick="startRound2()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 transition font-bold text-white rounded-2xl text-lg shadow-lg shadow-indigo-600/20">
+                지금 바로 라운드 2 시작하기
+            </button>
+        </div>
+
+        <!-- Game Play Screen -->
+        <div id="screen-game" class="w-full bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xl hidden flex flex-col items-center">
+            
+            <!-- Top Stats Header -->
+            <div class="w-full flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
+                <div>
+                    <span id="txt-round" class="text-indigo-600 font-bold text-lg">라운드 1</span>
+                    <span id="txt-progress" class="text-xs font-medium text-slate-400 ml-2">(1 / 20)</span>
+                </div>
+                <div class="w-36 bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                    <div id="timer-bar" class="bg-indigo-500 h-full w-full transition-all duration-100"></div>
+                </div>
+            </div>
+
+            <!-- Instruction Box -->
+            <div id="rule-instruction" class="bg-indigo-50/70 border border-indigo-100 px-4 py-2.5 rounded-xl text-indigo-900 text-xs md:text-sm font-medium mb-6 text-center w-full">
+                화면에 제시되는 도형이 두 번째 전 도형과 같은지 판단해 주세요.
+            </div>
+
+            <!-- JOBDA Style Stacked Cards Container -->
+            <div class="relative w-52 h-52 md:w-60 md:h-60 flex items-center justify-center mb-8">
+                <!-- Background Stacked Cards Effect -->
+                <div class="absolute inset-0 bg-white border border-slate-200 rounded-3xl shadow-sm transform -rotate-6 translate-x-2 translate-y-2 opacity-50"></div>
+                <div class="absolute inset-0 bg-white border border-slate-200 rounded-3xl shadow-sm transform -rotate-3 translate-x-1 translate-y-1 opacity-75"></div>
+                
+                <!-- Main Foreground Card -->
+                <div class="relative w-full h-full bg-white border-2 border-slate-200 rounded-3xl flex items-center justify-center shadow-lg">
+                    <div id="shape-container" class="w-32 h-32 md:w-36 md:h-36 flex items-center justify-center">
+                        <!-- Dynamic SVG Shape -->
+                    </div>
+                    <!-- Subtle Input Registered Indicator (No Correct/Incorrect popup during gameplay) -->
+                    <div id="input-registered" class="absolute bottom-3 right-3 bg-slate-900/70 text-white text-[10px] px-2 py-1 rounded-md opacity-0 transition-opacity">
+                        입력됨
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Key UI Panel -->
+            <div id="controls-panel" class="grid grid-cols-3 gap-3 w-full text-center">
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex flex-col items-center justify-center shadow-sm">
+                    <span class="keycap mb-1">←</span>
+                    <span class="text-xs font-bold text-slate-700">같음 (2번째 전)</span>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex flex-col items-center justify-center shadow-sm">
+                    <span class="keycap mb-1">SPACE</span>
+                    <span class="text-xs font-bold text-slate-700">다름 (해당 없음)</span>
+                </div>
+                <div id="btn-right-wrapper" class="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex flex-col items-center justify-center shadow-sm">
+                    <span class="keycap mb-1">→</span>
+                    <span class="text-xs font-bold text-slate-700">3번째 전</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Result Screen with Round Toggle & Sequence Breakdown -->
+        <div id="screen-result" class="w-full bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xl max-w-2xl hidden flex flex-col items-center">
+            <div class="inline-flex p-3 bg-emerald-50 text-emerald-600 rounded-2xl mb-4 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 mb-1">테스트 결과 분석</h2>
+            <p class="text-slate-500 text-sm mb-6">라운드별 정답 및 오답 상세 내역을 확인하세요.</p>
+
+            <!-- Score Summary Cards -->
+            <div class="grid grid-cols-2 gap-4 w-full mb-6">
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center">
+                    <div class="text-xs text-slate-500 font-medium mb-1">라운드 1 점수</div>
+                    <div id="res-score-1" class="text-xl font-extrabold text-indigo-600">0 점</div>
+                </div>
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center">
+                    <div class="text-xs text-slate-500 font-medium mb-1">라운드 2 점수</div>
+                    <div id="res-score-2" class="text-xl font-extrabold text-indigo-600">0 점</div>
+                </div>
+            </div>
+
+            <!-- Round Selector Tabs -->
+            <div class="flex space-x-2 w-full mb-4 bg-slate-100 p-1 rounded-xl">
+                <button onclick="switchResultTab(1)" id="tab-btn-1" class="flex-1 py-2.5 rounded-lg text-sm font-bold bg-white text-indigo-600 shadow-sm transition">
+                    라운드 1 상세 분석 (20문제)
+                </button>
+                <button onclick="switchResultTab(2)" id="tab-btn-2" class="flex-1 py-2.5 rounded-lg text-sm font-bold text-slate-600 hover:text-slate-900 transition">
+                    라운드 2 상세 분석 (20문제)
+                </button>
+            </div>
+
+            <!-- Sequence Detail Container -->
+            <div class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 max-h-72 overflow-y-auto mb-6">
+                <div class="text-xs font-semibold text-slate-500 mb-3 flex justify-between items-center px-1">
+                    <span>순서별 도형 출제 및 정오답 비교</span>
+                    <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> 정답 <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block ml-1"></span> 오답</span>
+                </div>
+                <div id="sequence-details-list" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <!-- Dynamic Items -->
+                </div>
+            </div>
+
+            <button onclick="resetGame()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 transition font-bold text-white rounded-2xl text-base shadow-lg shadow-indigo-600/20">
+                처음으로 돌아가기
+            </button>
+        </div>
+
+    </main>
+
+    <footer class="w-full max-w-4xl mx-auto px-6 py-4 text-center text-xs text-slate-400 border-t border-slate-200/60 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <p>© JOBDA N-Back Simulator Project. For college graduates.</p>
+        <!-- Discreet creator attribution requested by user -->
+        <p class="opacity-70 font-mono">Designed & Built by <span class="text-indigo-600 font-bold">aisojang</span></p>
+    </footer>
+
+    <script>
+        const SHAPES = [
+            { 
+                id: 0, 
+                name: '클로버형 (X자)', 
+                svg: '<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M50 15 C35 15, 15 35, 15 50 C15 65, 35 85, 50 85 C65 85, 85 65, 85 50 C85 35, 65 15, 50 15 Z" fill="#2dd4bf" opacity="0.9"/><path d="M30 30 Q50 50 70 30 Q50 50 70 70 Q50 50 30 70 Q50 50 30 30 Z" fill="#0d9488"/></svg>' 
+            },
+            { 
+                id: 1, 
+                name: '물결 톱니형', 
+                svg: '<svg viewBox="0 0 100 100" class="w-full h-full"><path d="M20 75 L30 45 L40 70 L50 40 L60 70 L70 45 L80 75 Z" fill="#2dd4bf" stroke="#0f766e" stroke-width="3" stroke-linejoin="round"/></svg>' 
+            },
+            { 
+                id: 2, 
+                name: '중첩 삼각형', 
+                svg: '<svg viewBox="0 0 100 100" class="w-full h-full"><polygon points="50,15 25,40 75,40" fill="#2dd4bf"/><polygon points="50,55 25,80 75,80" fill="#2dd4bf"/></svg>' 
+            }
+        ];
+
+        let gameState = {
+            round: 1,
+            currentIndex: 0,
+            totalPerRound: 20,
+            timeLimit: 3000, // 3 seconds per question
+            timer: null,
+            isWaitingInput: false,
+            answeredThisTurn: false,
+            userActionThisTurn: null,
+            round1Data: [], // Stores question objects: {shapeId, correctAnswer, userAnswer, isCorrect}
+            round2Data: [],
+            activeResultTab: 1,
+            transitionTimer: null
+        };
+
+        const screens = {
+            intro: document.getElementById('screen-intro'),
+            transition: document.getElementById('screen-transition'),
+            game: document.getElementById('screen-game'),
+            result: document.getElementById('screen-result')
+        };
+
+        function switchScreen(name) {
+            Object.keys(screens).forEach(k => {
+                screens[k].classList.toggle('hidden', k !== name);
+            });
+        }
+
+        function startSimulation() {
+            gameState.round = 1;
+            gameState.round1Data = [];
+            gameState.round2Data = [];
+            document.getElementById('status-badge').innerText = '라운드 1 진행 중';
+            switchScreen('game');
+            startRound();
+        }
+
+        function startRound() {
+            gameState.currentIndex = 0;
+            generateSequenceForCurrentRound();
+            showNextStimulus();
+        }
+
+        function generateSequenceForCurrentRound() {
+            let dataArr = [];
+            for (let i = 0; i < gameState.totalPerRound; i++) {
+                const randomShapeId = Math.floor(Math.random() * SHAPES.length);
+                dataArr.push({
+                    index: i + 1,
+                    shapeId: randomShapeId,
+                    correctAnswer: 'NONE',
+                    userAnswer: 'NONE',
+                    isCorrect: false
+                });
+            }
+
+            // Compute correct answers based on rules
+            for (let i = 0; i < gameState.totalPerRound; i++) {
+                if (gameState.round === 1) {
+                    if (i >= 2 && dataArr[i].shapeId === dataArr[i - 2].shapeId) {
+                        dataArr[i].correctAnswer = '2ND';
+                    } else {
+                        dataArr[i].correctAnswer = 'NONE';
+                    }
+                } else {
+                    let match2 = (i >= 2 && dataArr[i].shapeId === dataArr[i - 2].shapeId);
+                    let match3 = (i >= 3 && dataArr[i].shapeId === dataArr[i - 3].shapeId);
+
+                    if (match2) dataArr[i].correctAnswer = '2ND';
+                    else if (match3) dataArr[i].correctAnswer = '3RD';
+                    else dataArr[i].correctAnswer = 'NONE';
+                }
+            }
+
+            if (gameState.round === 1) gameState.round1Data = dataArr;
+            else gameState.round2Data = dataArr;
+        }
+
+        function showNextStimulus() {
+            if (gameState.currentIndex >= gameState.totalPerRound) {
+                if (gameState.round === 1) {
+                    showTransitionScreen();
+                    return;
+                } else {
+                    endSimulation();
+                    return;
+                }
+            }
+
+            const currentData = (gameState.round === 1 ? gameState.round1Data : gameState.round2Data)[gameState.currentIndex];
+
+            document.getElementById('txt-round').innerText = `라운드 ${gameState.round}`;
+            document.getElementById('txt-progress').innerText = `(${gameState.currentIndex + 1} / ${gameState.totalPerRound})`;
+
+            const ruleTxt = document.getElementById('rule-instruction');
+            const rightBtnWrapper = document.getElementById('btn-right-wrapper');
+
+            if (gameState.round === 1) {
+                ruleTxt.innerHTML = '화면에 제시되는 도형이 <strong>두 번째 전 도형과 같은지</strong> 판단해 주세요.';
+                rightBtnWrapper.style.opacity = '0.3';
+            } else {
+                ruleTxt.innerHTML = '화면에 제시되는 도형이 <strong>2번째 전, 3번째 전, 혹은 둘 다 아닌지</strong> 판단해 주세요.';
+                rightBtnWrapper.style.opacity = '1';
+            }
+
+            document.getElementById('shape-container').innerHTML = SHAPES[currentData.shapeId].svg;
+
+            gameState.isWaitingInput = true;
+            gameState.answeredThisTurn = false;
+            gameState.userActionThisTurn = 'NONE'; // default if timeout
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(gameState.timer);
+            let startTime = Date.now();
+            const timerBar = document.getElementById('timer-bar');
+
+            gameState.timer = setInterval(() => {
+                let elapsed = Date.now() - startTime;
+                let pct = Math.max(0, 100 - (elapsed / gameState.timeLimit) * 100);
+                timerBar.style.width = pct + '%';
+
+                if (elapsed >= gameState.timeLimit) {
+                    clearInterval(gameState.timer);
+                    if (!gameState.answeredThisTurn) {
+                        recordAnswerAndProceed('NONE');
+                    }
+                }
+            }, 50);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (screens.game.classList.contains('hidden') || !gameState.isWaitingInput || gameState.answeredThisTurn) return;
+
+            let action = null;
+            if (e.code === 'ArrowLeft') {
+                action = '2ND';
+                e.preventDefault();
+            } else if (e.code === 'ArrowRight' && gameState.round === 2) {
+                action = '3RD';
+                e.preventDefault();
+            } else if (e.code === 'Space' || e.code === 'KeyN') {
+                action = 'NONE';
+                e.preventDefault();
+            }
+
+            if (action) {
+                clearInterval(gameState.timer);
+                gameState.answeredThisTurn = true;
+                recordAnswerAndProceed(action);
+            }
+        });
+
+        function recordAnswerAndProceed(userAction) {
+            gameState.isWaitingInput = false;
+            const currentDataList = (gameState.round === 1 ? gameState.round1Data : gameState.round2Data);
+            const currentItem = currentDataList[gameState.currentIndex];
+
+            currentItem.userAnswer = userAction;
+            currentItem.isCorrect = (userAction === currentItem.correctAnswer);
+
+            // Subtle input feedback indicator
+            const indicator = document.getElementById('input-registered');
+            indicator.style.opacity = '1';
+            setTimeout(() => { indicator.style.opacity = '0'; }, 300);
+
+            setTimeout(() => {
+                gameState.currentIndex++;
+                showNextStimulus();
+            }, 250); // fast transition between questions without popup
+        }
+
+        function showTransitionScreen() {
+            clearInterval(gameState.timer);
+            switchScreen('transition');
+            document.getElementById('status-badge').innerText = '라운드 휴식 중';
+
+            let count = 10;
+            const countNumEl = document.getElementById('countdown-number');
+            countNumEl.innerText = count;
+
+            clearInterval(gameState.transitionTimer);
+            gameState.transitionTimer = setInterval(() => {
+                count--;
+                countNumEl.innerText = count;
+                if (count <= 0) {
+                    clearInterval(gameState.transitionTimer);
+                    startRound2();
+                }
+            }, 1000);
+        }
+
+        function startRound2() {
+            clearInterval(gameState.transitionTimer);
+            gameState.round = 2;
+            document.getElementById('status-badge').innerText = '라운드 2 진행 중';
+            switchScreen('game');
+            startRound();
+        }
+
+        function endSimulation() {
+            clearInterval(gameState.timer);
+            switchScreen('result');
+            document.getElementById('status-badge').innerText = '테스트 완료';
+
+            // Calculate scores
+            let score1 = gameState.round1Data.filter(x => x.isCorrect).length * 5;
+            let score2 = gameState.round2Data.filter(x => x.isCorrect).length * 5;
+
+            document.getElementById('res-score-1').innerText = `${score1} 점`;
+            document.getElementById('res-score-2').innerText = `${score2} 점`;
+
+            switchResultTab(1);
+        }
+
+        function switchResultTab(tabNum) {
+            gameState.activeResultTab = tabNum;
+            const btn1 = document.getElementById('tab-btn-1');
+            const btn2 = document.getElementById('tab-btn-2');
+
+            if (tabNum === 1) {
+                btn1.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold bg-white text-indigo-600 shadow-sm transition';
+                btn2.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold text-slate-600 hover:text-slate-900 transition';
+            } else {
+                btn2.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold bg-white text-indigo-600 shadow-sm transition';
+                btn1.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold text-slate-600 hover:text-slate-900 transition';
+            }
+
+            renderSequenceDetails();
+        }
+
+        function renderSequenceDetails() {
+            const container = document.getElementById('sequence-details-list');
+            container.innerHTML = '';
+            const dataList = (gameState.activeResultTab === 1 ? gameState.round1Data : gameState.round2Data);
+
+            dataList.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border flex flex-col items-center justify-center bg-white ${item.isCorrect ? 'border-emerald-200 shadow-sm' : 'border-rose-300 bg-rose-50/30'}`;
+
+                const actionLabel = (act) => {
+                    if (act === '2ND') return '2번째전(←)';
+                    if (act === '3RD') return '3번째전(→)';
+                    return '다름(Space)';
+                };
+
+                card.innerHTML = `
+                    <div class="flex justify-between w-full text-[11px] text-slate-400 font-medium mb-1">
+                        <span>#${item.index}</span>
+                        <span class="${item.isCorrect ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}">
+                            ${item.isCorrect ? '정답' : '오답'}
+                        </span>
+                    </div>
+                    <div class="w-10 h-10 my-1 flex items-center justify-center">
+                        ${SHAPES[item.shapeId].svg}
+                    </div>
+                    <div class="text-[10px] text-slate-600 mt-1 text-center leading-tight">
+                        입력: <span class="font-semibold">${actionLabel(item.userAnswer)}</span><br/>
+                        정답: <span class="font-semibold text-indigo-600">${actionLabel(item.correctAnswer)}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function resetGame() {
+            clearInterval(gameState.timer);
+            clearInterval(gameState.transitionTimer);
+            switchScreen('intro');
+            document.getElementById('status-badge').innerText = '대기 중';
+        }
+    </script>
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            if (document.getElementById("floating-back-btn")) return;
+            const btn = document.createElement("a");
+            btn.id = "floating-back-btn";
+            btn.href = "index.html";
+            btn.innerHTML = "🏠 메인으로";
+            btn.style.cssText = "position:fixed !important; top:20px !important; right:20px !important; z-index:2147483647 !important; background:#4f46e5 !important; color:white !important; padding:10px 20px !important; border-radius:30px !important; font-family:sans-serif !important; font-size:14px !important; font-weight:bold !important; text-decoration:none !important; box-shadow:0 4px 15px rgba(0,0,0,0.2) !important; cursor:pointer !important;";
+            btn.onclick = (e) => { e.preventDefault(); location.href = "index.html"; };
+            document.body.appendChild(btn);
+        });
+    </script>
+</body>
+</html>

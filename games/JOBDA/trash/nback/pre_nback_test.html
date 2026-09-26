@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N-Back 사전 훈련 - 도형-숫자 반사 모드</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 360px;
+        }
+        .mapping-table {
+            display: flex;
+            justify-content: space-around;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .display {
+            width: 140px;
+            height: 140px;
+            line-height: 140px;
+            background: #2b3a4a;
+            color: white;
+            font-size: 64px;
+            margin: 0 auto 20px;
+            border-radius: 12px;
+        }
+        .num-btns {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .num-btn {
+            flex: 1;
+            padding: 15px 0;
+            font-size: 20px;
+            font-weight: bold;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .num-btn:active { transform: scale(0.92); }
+        .num-btn:disabled { background: #ccc; }
+        .status { height: 24px; font-weight: bold; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>⚡ 도형 ➔ 숫자 반사 훈련</h3>
+    
+    <!-- 1:1 매핑 가이드 -->
+    <div class="mapping-table">
+        <span>★:1</span>
+        <span>▲:2</span>
+        <span>■:3</span>
+        <span>♥:4</span>
+        <span>◆:5</span>
+    </div>
+
+    <div class="status" id="status-msg">도형을 보고 1~5 숫자를 누르세요!</div>
+    <div class="display" id="shape-display">?</div>
+
+    <div class="num-btns">
+        <button class="num-btn" onclick="pressNum(1)">1</button>
+        <button class="num-btn" onclick="pressNum(2)">2</button>
+        <button class="num-btn" onclick="pressNum(3)">3</button>
+        <button class="num-btn" onclick="pressNum(4)">4</button>
+        <button class="num-btn" onclick="pressNum(5)">5</button>
+    </div>
+
+    <button style="width:100%; padding:12px; background:#28a745; color:white; border:none; border-radius:8px; font-size:16px; font-weight:bold; cursor:pointer;" onclick="startWarmup()">워밍업 시작 (10회)</button>
+</div>
+
+<script>
+    const shapes = ['★', '▲', '■', '♥', '◆'];
+    let currentShapeIdx = -1;
+    let count = 0;
+    let startTime = 0;
+    let times = [];
+
+    function startWarmup() {
+        count = 0;
+        times = [];
+        document.getElementById('status-msg').innerText = "준비...";
+        document.getElementById('status-msg').style.color = "#333";
+        nextShape();
+    }
+
+    function nextShape() {
+        if (count >= 10) {
+            const avg = Math.round(times.reduce((a,b)=>a+b, 0) / times.length);
+            document.getElementById('shape-display').innerText = "OK";
+            document.getElementById('status-msg').innerText = `훈련 완료! 평균 반응속도: ${avg}ms`;
+            document.getElementById('status-msg').style.color = "#007bff";
+            return;
+        }
+
+        currentShapeIdx = Math.floor(Math.random() * shapes.length);
+        document.getElementById('shape-display').innerText = shapes[currentShapeIdx];
+        startTime = Date.now();
+    }
+
+    function pressNum(num) {
+        if (currentShapeIdx === -1 || count >= 10) return;
+
+        const reactionTime = Date.now() - startTime;
+        const correctNum = currentShapeIdx + 1;
+
+        if (num === correctNum) {
+            times.push(reactionTime);
+            count++;
+            document.getElementById('status-msg').innerText = `⭕ ${reactionTime}ms`;
+            document.getElementById('status-msg').style.color = "#28a745";
+            nextShape();
+        } else {
+            document.getElementById('status-msg').innerText = `❌ 오답! (${shapes[currentShapeIdx]} = ${correctNum})`;
+            document.getElementById('status-msg').style.color = "#dc3545";
+        }
+    }
+</script>
+
+</body>
+</html>

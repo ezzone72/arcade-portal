@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 역량검사 - N-Back 실전 연습 & AI 피드백</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+        .game-card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 380px;
+            position: relative;
+        }
+        .top-tools {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .btn-help {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #555;
+        }
+        .display-box {
+            width: 160px;
+            height: 160px;
+            margin: 15px auto;
+            background-color: #2b3a4a;
+            color: #ffffff;
+            font-size: 72px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        button.game-btn {
+            flex: 1;
+            padding: 16px 10px;
+            font-size: 18px;
+            font-weight: bold;
+            border: 3px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.05s, background-color 0.2s;
+            outline: none;
+        }
+        button.game-btn:active:not(:disabled) { transform: scale(0.93); }
+        .btn-match { background-color: #28a745; color: white; }
+        .btn-differ { background-color: #dc3545; color: white; }
+        .btn-selected { border-color: #111 !important; transform: scale(0.96); }
+        
+        .btn-action {
+            width: 100%;
+            padding: 14px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-start { background-color: #007bff; color: white; }
+        .btn-feedback { background-color: #17a2b8; color: white; display: none; }
+        
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .result-msg { height: 28px; margin-top: 10px; font-size: 18px; font-weight: bold; }
+
+        /* Modal Popups */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 320px;
+            text-align: left;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-content h3 { margin-top: 0; color: #2b3a4a; text-align: center; }
+        .report-item {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .report-item h4 { margin: 0 0 5px 0; font-size: 14px; color: #333; }
+        .report-item p { margin: 0; font-size: 12px; color: #666; line-height: 1.4; }
+        .close-btn {
+            width: 100%;
+            padding: 10px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-card">
+    <div class="top-tools">
+        <span style="font-weight: bold; color: #007bff;">AI 역검 연습장</span>
+        <button class="btn-help" onclick="toggleModal('help-modal', true)">💡 공략 헬프</button>
+    </div>
+
+    <div class="info-bar">
+        <span>남은 문제: <span id="rem-count">10</span></span>
+        <span>점수: <span id="score">0</span></span>
+    </div>
+
+    <div class="display-box" id="display-box">?</div>
+    <div class="result-msg" id="result-msg"></div>
+
+    <div class="btn-group">
+        <button class="game-btn btn-match" id="btn-match" onclick="checkAnswer(true)" disabled>일치 (SAME)</button>
+        <button class="game-btn btn-differ" id="btn-differ" onclick="checkAnswer(false)" disabled>불일치 (DIFFERENT)</button>
+    </div>
+
+    <button class="btn-action btn-start" id="btn-start" onclick="startGame()">게임 시작 (1회 차감)</button>
+    <button class="btn-action btn-feedback" id="btn-feedback" onclick="toggleModal('feedback-modal', true)">📊 AI 평가 피드백 분석 보기</button>
+</div>
+
+<!-- 공략 헬프 모달 -->
+<div class="modal-overlay" id="help-modal">
+    <div class="modal-content">
+        <h3>💡 N-Back 합격 공략법</h3>
+        <p><b>1. 숫자 청킹(Chunking):</b> 도형을 단어가 아닌 숫자로 바꿔 '2자리 숫자'로 입안에서 중얼거리세요. (예: 23 → 31 → 14)</p>
+        <p><b>2. 100점에 집착 금지:</b> 100점보다 <b>일정한 반응 속도(리듬)</b> 유지가 훨씬 더 우수한 평가를 받습니다.</p>
+        <p><b>3. 즉시 리셋:</b> 틀렸을 때 미련을 버리고 지금 나오는 도형부터 새로 1번으로 잡으세요.</p>
+        <button class="close-btn" onclick="toggleModal('help-modal', false)">닫기</button>
+    </div>
+</div>
+
+<!-- AI 피드백 모달 -->
+<div class="modal-overlay" id="feedback-modal">
+    <div class="modal-content">
+        <h3>📊 AI 평가자 리포트</h3>
+        <div class="report-item">
+            <h4>1. 작업기억 정확도: <span id="rpt-accuracy">0%</span></h4>
+            <p id="rpt-accuracy-desc">-</p>
+        </div>
+        <div class="report-item">
+            <h4>2. 판단 일관성 (평균 반응속도): <span id="rpt-speed">0ms</span></h4>
+            <p id="rpt-speed-desc">-</p>
+        </div>
+        <div class="report-item">
+            <h4>3. 멘탈 회복력 (오답 후 반응):</h4>
+            <p id="rpt-recovery-desc">-</p>
+        </div>
+        <button class="close-btn" onclick="toggleModal('feedback-modal', false)">닫기</button>
+    </div>
+</div>
+
+<script>
+    const N = 2;
+    const symbols = ['★', '▲', '■', '♥', '◆'];
+    const totalRounds = 10;
+
+    let sequence = [];
+    let currentIndex = 0;
+    let score = 0;
+    let timer = null;
+    let answered = false;
+
+    // AI 피드백용 데이터 수집 변수
+    let turnStartTime = 0;
+    let responseTimes = [];
+    let answerHistory = []; // { isCorrect: bool, time: ms }
+
+    function startGame() {
+        sequence = [];
+        currentIndex = 0;
+        score = 0;
+        responseTimes = [];
+        answerHistory = [];
+
+        document.getElementById('score').innerText = score;
+        document.getElementById('result-msg').innerText = '';
+        document.getElementById('btn-start').disabled = true;
+        document.getElementById('btn-feedback').style.display = 'none';
+        
+        for (let i = 0; i < totalRounds + N; i++) {
+            if (i >= N && Math.random() < 0.35) {
+                sequence.push(sequence[i - N]);
+            } else {
+                sequence.push(symbols[Math.floor(Math.random() * symbols.length)]);
+            }
+        }
+
+        nextTurn();
+    }
+
+    function nextTurn() {
+        if (currentIndex >= sequence.length) {
+            endGame();
+            return;
+        }
+
+        answered = false;
+        document.getElementById('btn-match').classList.remove('btn-selected');
+        document.getElementById('btn-differ').classList.remove('btn-selected');
+
+        const currentSymbol = sequence[currentIndex];
+        document.getElementById('display-box').innerText = currentSymbol;
+        document.getElementById('rem-count').innerText = sequence.length - currentIndex;
+
+        if (currentIndex >= N) {
+            document.getElementById('btn-match').disabled = false;
+            document.getElementById('btn-differ').disabled = false;
+            document.getElementById('result-msg').innerText = "";
+            turnStartTime = Date.now(); // 반응 속도 측정 시작
+        } else {
+            document.getElementById('btn-match').disabled = true;
+            document.getElementById('btn-differ').disabled = true;
+            document.getElementById('result-msg').innerText = "기억하세요...";
+            document.getElementById('result-msg').style.color = "#555";
+        }
+
+        timer = setTimeout(() => {
+            if (currentIndex >= N && !answered) {
+                document.getElementById('result-msg').innerText = "⏱️ 시간 초과!";
+                document.getElementById('result-msg').style.color = "orange";
+                answerHistory.push({ isCorrect: false, time: 1800 });
+            }
+            currentIndex++;
+            nextTurn();
+        }, 1800);
+    }
+
+    function checkAnswer(userSaysMatch) {
+        if (answered || currentIndex < N) return;
+        answered = true;
+
+        const reactionTime = Date.now() - turnStartTime;
+        responseTimes.push(reactionTime);
+
+        const btnMatch = document.getElementById('btn-match');
+        const btnDiffer = document.getElementById('btn-differ');
+        btnMatch.disabled = true;
+        btnDiffer.disabled = true;
+
+        if (userSaysMatch) btnMatch.classList.add('btn-selected');
+        else btnDiffer.classList.add('btn-selected');
+
+        const isMatch = (sequence[currentIndex] === sequence[currentIndex - N]);
+        const isCorrect = (userSaysMatch === isMatch);
+
+        answerHistory.push({ isCorrect: isCorrect, time: reactionTime });
+
+        if (isCorrect) {
+            score += 10;
+            document.getElementById('result-msg').innerText = "⭕ 정답!";
+            document.getElementById('result-msg').style.color = "#28a745";
+        } else {
+            document.getElementById('result-msg').innerText = "❌ 오답!";
+            document.getElementById('result-msg').style.color = "#dc3545";
+        }
+
+        document.getElementById('score').innerText = score;
+    }
+
+    function endGame() {
+        clearTimeout(timer);
+        document.getElementById('display-box').innerText = "FIN";
+        document.getElementById('result-msg').innerText = `게임 종료! 최종 점수: ${score}점`;
+        document.getElementById('result-msg').style.color = "#007bff";
+        
+        document.getElementById('btn-match').disabled = true;
+        document.getElementById('btn-differ').disabled = true;
+        document.getElementById('btn-start').disabled = false;
+        
+        // 피드백 버튼 노출 및 데이터 분석
+        generateFeedback();
+        document.getElementById('btn-feedback').style.display = 'block';
+    }
+
+    function generateFeedback() {
+        // 1. 정확도 계산
+        const totalValid = answerHistory.length;
+        const correctCount = answerHistory.filter(a => a.isCorrect).length;
+        const accuracy = totalValid > 0 ? Math.round((correctCount / totalValid) * 100) : 0;
+        
+        document.getElementById('rpt-accuracy').innerText = accuracy + "%";
+        let accDesc = "";
+        if (accuracy >= 90) accDesc = "매우 우수한 작업기억력입니다. 단, 실전에서는 일정한 반응 속도를 함께 유지해야 우수한 평가를 받습니다.";
+        else if (accuracy >= 70) accDesc = "합격권 안정 범위입니다. 뇌 과부하 상황에서도 안정적인 기억력을 유지하고 있습니다.";
+        else accDesc = "작업기억 과부하가 발생했습니다. 숫자로 바꿔 외우는 청킹 기법을 연습하세요.";
+        document.getElementById('rpt-accuracy-desc').innerText = accDesc;
+
+        // 2. 평균 반응 속도 계산
+        const avgTime = responseTimes.length > 0 ? Math.round(responseTimes.reduce((a,b)=>a+b, 0) / responseTimes.length) : 0;
+        document.getElementById('rpt-speed').innerText = avgTime + "ms";
+        let speedDesc = "";
+        if (avgTime < 600) speedDesc = "매우 빠른 판단력입니다. 리듬감이 우수하여 판단 망설임이 거의 없습니다.";
+        else if (avgTime < 1100) speedDesc = "적정 반응 속도입니다. 실수 없이 일정한 템포를 유지하는 데 집중하세요.";
+        else speedDesc = "판단 지연이 발생하고 있습니다. 망설이지 않고 누르는 리듬 훈련이 필요합니다.";
+        document.getElementById('rpt-speed-desc').innerText = speedDesc;
+
+        // 3. 멘탈 회복력 분석 (오답 직후 속도 지연 판별)
+        let recDesc = "실수 직후에도 페이스를 잃지 않고 일정한 템포를 유지했습니다. (압박 저항력 우수)";
+        for (let i = 0; i < answerHistory.length - 1; i++) {
+            if (!answerHistory[i].isCorrect && answerHistory[i+1].time > avgTime * 1.4) {
+                recDesc = "오답 직후 다음 문항에서 반응 속도가 급격히 느려졌습니다. 실수 후 멘탈 흔들림(뇌절)을 주의하세요.";
+                break;
+            }
+        }
+        document.getElementById('rpt-recovery-desc').innerText = recDesc;
+    }
+
+    function toggleModal(id, show) {
+        document.getElementById(id).style.display = show ? 'flex' : 'none';
+    }
+</script>
+
+</body>
+</html>

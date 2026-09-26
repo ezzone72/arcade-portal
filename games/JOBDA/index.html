@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOBDA AI 9종 역량검사 마스터 시뮬레이터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- 헤더 (깔끔한 화이트 + 글래스모피즘) -->
+    <header class="bg-white/90 backdrop-blur border-b border-slate-200 sticky top-0 z-50 px-8 py-5 flex justify-between items-center shadow-sm">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl">🎯</span>
+            <h1 class="text-xl font-bold tracking-tight text-slate-900">JOBDA AI 역량검사 마스터 패키지</h1>
+        </div>
+        <div class="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3.5 py-1.5 rounded-full flex items-center space-x-1.5 shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+            <span>PRO EDITION (9 Games)</span>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <main class="max-w-7xl mx-auto px-6 py-10 w-full flex-1">
+        <div class="mb-8 flex justify-between items-end">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900 tracking-tight">실전 시뮬레이터 대시보드</h2>
+                <p class="text-sm text-slate-500 mt-1">학습하고자 하는 역량 검사 항목을 선택하여 즉시 실행하세요.</p>
+            </div>
+            <span class="text-xs text-slate-400 font-mono">Total 9 Modules</span>
+        </div>
+
+        <!-- 9개 게임 카드 그리드 (빨주노초파남보 무지개 파스텔톤 적용) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <!-- 1. 가위바위보 (레드/코랄 계열) -->
+            <div onclick="openGame('R_S_P_game_v01.html')" class="group bg-gradient-to-br from-rose-50 to-orange-50/40 hover:from-rose-100/70 hover:to-orange-100/50 border border-rose-200/80 hover:border-rose-400 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-3xl">✊</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-rose-100 text-rose-700 border border-rose-200">인지능력</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-rose-700 transition-colors">1. 가위바위보</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">빠른 판단력과 규칙 적용 능력을 측정하는 기초 인지 게임입니다.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-rose-200/50 flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>⏱️ 3분 소요</span>
+                    <span class="text-rose-600 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center">시작하기 &rarr;</span>
+                </div>
+            </div>
+
+            <!-- 2. 도형 회전하기 (오렌지 계열) -->
+            <div onclick="openGame('code_artifact.html')" class="group bg-gradient-to-br from-amber-50 to-yellow-50/40 hover:from-amber-100/70 hover:to-yellow-100/50 border border-amber-200/80 hover:border-amber-400 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-3xl">🔄</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 border border-amber-200">공간능력</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-amber-700 transition-colors">2. 도형 회전하기</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">3차원 공간 지각 능력과 회전 추론을 요구하는 핵심 시뮬레이션입니다.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-amber-200/50 flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>⏱️ 6분 소요</span>
+                    <span class="text-amber-600 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center">시작하기 &rarr;</span>
+                </div>
+            </div>
+
+            <!-- 3. 약속 정하기 (옐로우/골드 계열) -->
+            <div onclick="openGame('promise.html')" class="group bg-gradient-to-br from-yellow-50 to-lime-50/40 hover:from-yellow-100/70 hover:to-lime-100/50 border border-yellow-200/80 hover:border-yellow-400 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-3xl">📅</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-yellow-100 text-yellow-800 border border-yellow-200">작업기억</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-yellow-800 transition-colors">3. 약속 정하기</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">복잡한 스케줄 속에서 최적의 일정을 도출하는 작업기억력 게임입니다.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-yellow-200/50 flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>⏱️ 4분 소요</span>
+                    <span class="text-yellow-700 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center">시작하기 &rarr;</span>
+                </div>
+            </div>
+
+            <!-- 4. 길 만들기 (초록 계열) -->
+            <div onclick="openGame('make_road.html')" class="group bg-gradient-to-br from-emerald-50 to-teal-50/40 hover:from-emerald-100/70 hover:to-teal-100/50 border border-emerald-200/80 hover:border-emerald-400 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-3xl">🛣️</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-700 border border-emerald-200">계획능력</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">4. 길 만들기</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">주어진 제약 조건 내에서 효율적인 경로를 설계하는 계획능력 검사입니다.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-emerald-200/50 flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>⏱️ 3분 소요</span>
+                    <span class="text-emerald-600 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center">시작하기 &rarr;</span>
+                </div>
+            </div>
+
+            <!-- 5. 마법약 만들기 (청록/시안 계열) -->
+            <div onclick="openGame('q_i_game.html')" class="group bg-gradient-to-br from-cyan-50 to-sky-50/40 hover:from-cyan-100/70 hover:to-sky-100/50 border border-cyan-200/80 hover:border-cyan-400 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-3xl">🧪</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-cyan-100 text-cyan-700 border border-cyan-200">학습능력</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-cyan-700 transition-colors">5. 마법약 만들기</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">포션 조합 규칙을 빠르게 학습하고 시행착오를 줄이는 학습능력 검사입니다.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-cyan-200/50 flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>⏱️ 6분 소요</span>
+                    <span class="text-cyan-600 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center">시작하기 &rarr;</span>
+                </div>
+            </div>
+
+            <!-- 6. 숫자 누르기 (블루 계열) -->
+            <div onclick="openGame('jobda_n_back_game_replica.html')" class="group bg-gradient-to-br from-blue-50 to-indigo-50/40 hover:from-blue-100/70 hover:to-indigo-100/50 border border-blue-200/80 hover:border-blue-400 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-3xl">🔢</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 border border-blue-200">인지제어</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-blue-700 transition-colors">6. 숫자 누르기 (N-Back)</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">연속되는 자극을 기억하고 제어하는 고난도 인지제어 훈련입니다.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-blue-200/50 flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>⏱️ 3분 소요</span>
+                    <span class="text-blue-600 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center">시작하기 &rarr;</span>
+                </div>
+            </div>
+
+            <!-- 7. 도형 순서 기억하기 (인디고/보라 계열) -->
+            <div onclick="openGame('postion_v01.html')" class="group bg-gradient-to-br from-indigo-50 to-purple-50/40 hover:from-indigo-100/70 hover:to-purple-100/50 border border-indigo-200/80 hover:border-indigo-400 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-3xl">📍</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-indigo-100 text-indigo-700 border border-indigo-200">위치기억</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">7. 도형 순서 기억하기</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">위치와 순차적 패턴을 정확히 기억해내는 시각적 기억력 훈련입니다.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-indigo-200/50 flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>⏱️ 5분 소요</span>
+                    <span class="text-indigo-600 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center">시작하기 &rarr;</span>
+                </div>
+            </div>
+
+            <!-- 8. 고양이 술래잡기 (퍼플/자주 계열) -->
+            <div onclick="openGame('cat_hide_and_seek.html')" class="group bg-gradient-to-br from-purple-50 to-fuchsia-50/40 hover:from-purple-100/70 hover:to-fuchsia-100/50 border border-purple-200/80 hover:border-purple-400 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-3xl">🐱</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-purple-100 text-purple-700 border border-purple-200">추적능력</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-purple-700 transition-colors">8. 고양이 술래잡기</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">움직이는 목표물을 지속적으로 추적하고 예측하는 집중력 검사입니다.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-purple-200/50 flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>⏱️ 4분 소요</span>
+                    <span class="text-purple-600 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center">시작하기 &rarr;</span>
+                </div>
+            </div>
+
+            <!-- 9. 개수 비교하기 (핑크/마젠타 계열) -->
+            <div onclick="openGame('big_small.html')" class="group bg-gradient-to-br from-pink-50 to-rose-50/40 hover:from-pink-100/70 hover:to-rose-100/50 border border-pink-200/80 hover:border-pink-400 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="text-3xl">⚖️</span>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-pink-100 text-pink-700 border border-pink-200">비교판별</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-pink-700 transition-colors">9. 개수 비교하기</h3>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">직관적인 크기와 수량을 빠르게 비교 판별하는 신속성 검사입니다.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-pink-200/50 flex items-center justify-between text-xs text-slate-500 font-medium">
+                    <span>⏱️ 3분 소요</span>
+                    <span class="text-pink-600 font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center">시작하기 &rarr;</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-white border-t border-slate-200 text-center py-6 px-4 text-xs text-slate-400">
+        <p>본 프로그램은 저작권법의 보호를 받습니다. 무단 복제 및 배포를 금지합니다.</p>
+    </footer>
+
+    <script>
+        // 게임 실행 함수
+        function openGame(filename) {
+            location.href = filename;
+        }
+
+        // [자동 네비게이션] 개별 게임 화면으로 들어갔을 때 우측 상단에 '메인으로' 플로팅 버튼 자동 주입
+        window.addEventListener('load', () => {
+            if (!window.location.href.includes('index.html')) {
+                if (document.getElementById('floating-back-btn')) return;
+
+                const backBtn = document.createElement('a');
+                backBtn.id = 'floating-back-btn';
+                backBtn.href = 'index.html';
+                backBtn.innerHTML = '🏠 메인으로';
+                backBtn.style.cssText = `
+                    position: fixed !important;
+                    top: 20px !important;
+                    right: 20px !important;
+                    z-index: 2147483647 !important;
+                    background: #4f46e5 !important;
+                    color: white !important;
+                    padding: 10px 20px !important;
+                    border-radius: 30px !important;
+                    font-family: 'Pretendard', sans-serif !important;
+                    font-size: 14px !important;
+                    font-weight: bold !important;
+                    text-decoration: none !important;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+                    cursor: pointer !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                `;
+                
+                backBtn.onmouseover = () => {
+                    backBtn.style.transform = 'translateY(-2px)';
+                    backBtn.style.background = '#4338ca';
+                };
+                backBtn.onmouseout = () => {
+                    backBtn.style.transform = 'translateY(0)';
+                    backBtn.style.background = '#4f46e5';
+                };
+
+                backBtn.onclick = (e) => {
+                    e.preventDefault();
+                    location.href = 'index.html';
+                };
+
+                document.body.appendChild(backBtn);
+            }
+        });
+    </script>
+</body>
+</html>

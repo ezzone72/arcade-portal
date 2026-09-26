@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>JOBDA 가위바위보 인지게임 시뮬레이터 (피드백 보강)</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background: #0f172a; color: #fff; text-align: center; margin: 0; padding: 20px; }
+        .container { max-width: 650px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        h1 { color: #38bdf8; font-size: 24px; margin-bottom: 10px; }
+        .info-box { display: flex; justify-content: space-around; background: #334155; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 18px; }
+        .arena { display: flex; justify-content: center; align-items: center; gap: 30px; margin: 40px 0; }
+        .card { background: #475569; padding: 30px; border-radius: 12px; min-width: 100px; font-size: 48px; border: 3px solid transparent; }
+        .card.active-target { border-color: #f43f5e; box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); }
+        .vs { font-weight: bold; color: #f43f5e; font-size: 28px; }
+        .key-guide { display: flex; justify-content: center; gap: 20px; margin-top: 30px; background: #334155; padding: 15px; border-radius: 8px; }
+        .key-box { font-size: 16px; color: #cbd5e1; }
+        .key-box b { color: #38bdf8; display: block; font-size: 20px; margin-top: 5px; }
+        button { background: #2563eb; color: white; border: none; padding: 15px 25px; font-size: 18px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #1d4ed8; }
+        .hidden { display: none; }
+        .menu-btn { display: block; width: 100%; margin: 10px 0; background: #334155; text-align: left; padding: 15px 20px; font-size: 16px; border-radius: 8px; }
+        .menu-btn:hover { background: #475569; }
+        #feedback-msg { font-size: 16px; height: 24px; margin-bottom: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✂️ JOBDA 가위바위보 인지게임 시뮬레이터</h1>
+    <p id="sub-title">좌측(나) / 우측(상대) 고정 및 실시간 피드백 훈련 프로그램</p>
+
+    <!-- 시작 화면 -->
+    <div id="start-screen">
+        <div style="margin: 30px 0; line-height: 1.6; text-align: left; background: #334155; padding: 20px; border-radius: 8px;">
+            <p><b>[조작키 안내]</b></p>
+            <p>👈 <b>좌측 화살표키</b> : 가위 (✌️)</p>
+            <p>👆 <b>상단 화살표키</b> : 바위 (✊)</p>
+            <p>👉 <b>우측 화살표키</b> : 보 (🖐️)</p>
+            <hr style="border:0; border-top:1px solid #475569; margin:15px 0;">
+            <p><b>[전체 코스]</b> 1라운드(40초) ➔ 8초 대기 ➔ 2라운드(40초) ➔ 8초 대기 ➔ 3라운드(1분 40초)</p>
+        </div>
+        <button class="menu-btn" onclick="startFullGame()">▶ 전체 게임 시작 (1라운드부터 자동 진행)</button>
+        <button class="menu-btn" onclick="startGame(1)">▶ 1라운드 단독 시작 (40초)</button>
+        <button class="menu-btn" onclick="startGame(2)">▶ 2라운드 단독 시작 (40초)</button>
+        <button class="menu-btn" onclick="startGame(3)">▶ 3라운드 단독 시작 (1분 40초)</button>
+    </div>
+
+    <!-- 라운드 휴식/대기 화면 -->
+    <div id="transition-screen" class="hidden">
+        <h2 id="trans-title" style="color: #38bdf8; font-size: 26px; margin-bottom: 20px;">라운드 종료!</h2>
+        <p id="trans-desc" style="font-size: 20px; margin-bottom: 30px; line-height: 1.5;"></p>
+        <p style="font-size: 22px;">다음 라운드까지: <b id="trans-timer" style="color: #f43f5e; font-size: 32px;">8</b>초</p>
+    </div>
+
+    <!-- 게임 플레이 화면 -->
+    <div id="game-screen" class="hidden">
+        <div class="info-box">
+            <span id="round-label">라운드 1</span>
+            <span>남은 시간: <b id="timer" style="color: #f43f5e;">40</b>초</span>
+            <span>현재 점수: <b id="score" style="color: #4ade80;">0</b>점</span>
+        </div>
+
+        <div id="feedback-msg"></div>
+
+        <div class="arena">
+            <!-- 좌측: 항상 플레이어(나) -->
+            <div class="card" id="left-card-box">
+                <span style="font-size:14px; display:block; color:#94a3b8; margin-bottom:5px;">나 (플레이어)</span>
+                <span id="left-content">❓</span>
+            </div>
+            <div class="vs">VS</div>
+            <!-- 우측: 항상 상대방 -->
+            <div class="card" id="right-card-box">
+                <span style="font-size:14px; display:block; color:#94a3b8; margin-bottom:5px;">상대방</span>
+                <span id="right-content">✊</span>
+            </div>
+        </div>
+
+        <p id="rule-desc" style="color: #cbd5e1; font-size: 18px; margin-bottom: 20px; font-weight: bold;"></p>
+
+        <div class="key-guide">
+            <div class="key-box">가위 (✌️)<br><b>← (좌)</b></div>
+            <div class="key-box">바위 (✊)<br><b>↑ (상)</b></div>
+            <div class="key-box">보 (🖐️)<br><b>→ (우)</b></div>
+        </div>
+    </div>
+
+    <!-- 최종 결과 화면 -->
+    <div id="result-screen" class="hidden">
+        <h2>전체 게임 종료!</h2>
+        <p style="font-size: 22px; margin: 30px 0;">총 누적 점수: <span id="final-score" style="color: #38bdf8; font-weight: bold;">0</span>점</p>
+        <button onclick="location.reload()" style="background: #2563eb;">메인으로 돌아가기</button>
+    </div>
+</div>
+
+<script>
+    const items = [
+        { name: '✊', key: 'ArrowUp' },
+        { name: '✌️', key: 'ArrowLeft' },
+        { name: '🖐️', key: 'ArrowRight' }
+    ];
+
+    let currentRound = 1;
+    let score = 0;
+    let totalScore = 0;
+    let timeLeft = 40;
+    let timerInterval;
+    let transitionInterval;
+    
+    let currentPerspective = 'me'; // 'me' (좌측 선택), 'opponent' (우측 선택)
+    let fixedItem = null; // 고정된 상대 또는 내 패
+    let gameActive = false;
+    let isFullRun = false; 
+
+    function startFullGame() {
+        isFullRun = true;
+        totalScore = 0;
+        startGame(1);
+    }
+
+    function startGame(round) {
+        currentRound = round;
+        score = 0;
+        timeLeft = (round === 3) ? 100 : 40;
+
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('transition-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        document.getElementById('round-label').innerText = `라운드 ${round}`;
+        
+        gameActive = true;
+        nextTurn();
+
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                gameActive = false;
+                handleRoundEnd();
+            }
+        }, 1000);
+    }
+
+    function handleRoundEnd() {
+        totalScore += score;
+        if (isFullRun && currentRound < 3) {
+            showTransitionScreen(currentRound + 1);
+        } else {
+            endGame();
+        }
+    }
+
+    function showTransitionScreen(nextRoundNum) {
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('transition-screen').classList.remove('hidden');
+        
+        let transDesc = document.getElementById('trans-desc');
+        let transTitle = document.getElementById('trans-title');
+        
+        transTitle.innerText = `라운드 ${currentRound} 완료!`;
+        transDesc.innerHTML = `이번 라운드 획득 점수: <b>${score}점</b><br>잠시 후 <b>8초 뒤에 ${nextRoundNum}라운드가 자동 시작</b>됩니다.`;
+
+        let waitTime = 8;
+        document.getElementById('trans-timer').innerText = waitTime;
+
+        transitionInterval = setInterval(() => {
+            waitTime--;
+            document.getElementById('trans-timer').innerText = waitTime;
+            if (waitTime <= 0) {
+                clearInterval(transitionInterval);
+                startGame(nextRoundNum);
+            }
+        }, 1000);
+    }
+
+    function nextTurn() {
+        if (!gameActive) return;
+
+        const randItem = items[Math.floor(Math.random() * items.length)];
+        document.getElementById('feedback-msg').innerText = "";
+
+        if (currentRound === 1) {
+            // 1라운드: 좌측(나)이 ❓, 우측(상대)이 고정 패
+            currentPerspective = 'me';
+            fixedItem = randItem; // 상대 패 고정
+            
+            document.getElementById('left-content').innerText = '❓';
+            document.getElementById('right-content').innerText = fixedItem.name;
+            
+            document.getElementById('left-card-box').classList.add('active-target');
+            document.getElementById('right-card-box').classList.remove('active-target');
+            
+            document.getElementById('rule-desc').innerText = "💡 [1라운드] 상대(우측)를 보고 내가 이기도록 좌측(나) 패를 선택하세요!";
+        } else if (currentRound === 2) {
+            // 2라운드: 좌측(나)이 고정 패, 우측(상대)이 ❓
+            currentPerspective = 'opponent';
+            fixedItem = randItem; // 내 패 고정
+            
+            document.getElementById('left-content').innerText = fixedItem.name;
+            document.getElementById('right-content').innerText = '❓';
+            
+            document.getElementById('left-card-box').classList.remove('active-target');
+            document.getElementById('right-card-box').classList.add('active-target');
+            
+            document.getElementById('rule-desc').innerText = "💡 [2라운드] 내 패(좌측)를 보고, 상대(우측)가 지도록 선택하세요!";
+        } else {
+            // 3라운드: 랜덤하게 좌측(나)이 물음표이거나, 우측(상대)이 물음표
+            currentPerspective = Math.random() < 0.5 ? 'me' : 'opponent';
+            fixedItem = randItem;
+
+            if (currentPerspective === 'me') {
+                // 좌측(나)이 물음표, 우측(상대)이 고정
+                document.getElementById('left-content').innerText = '❓';
+                document.getElementById('right-content').innerText = fixedItem.name;
+                document.getElementById('left-card-box').classList.add('active-target');
+                document.getElementById('right-card-box').classList.remove('active-target');
+                document.getElementById('rule-desc').innerText = "🔥 [3라운드] 우측(상대)을 보고 내가 이기도록 좌측(나)을 선택!";
+                document.getElementById('rule-desc').style.color = "#38bdf8";
+            } else {
+                // 좌측(나)이 고정, 우측(상대)이 물음표
+                document.getElementById('left-content').innerText = fixedItem.name;
+                document.getElementById('right-content').innerText = '❓';
+                document.getElementById('left-card-box').classList.remove('active-target');
+                document.getElementById('right-card-box').classList.add('active-target');
+                document.getElementById('rule-desc').innerText = "🔥 [3라운드] 좌측(나)을 보고 상대(우측)가 지도록 선택!";
+                document.getElementById('rule-desc').style.color = "#f43f5e";
+            }
+        }
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (!gameActive) return;
+
+        if (['ArrowLeft', 'ArrowUp', 'ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+            checkInput(e.key);
+        }
+    });
+
+    function checkInput(pressedKey) {
+        let isWin = false;
+        const pressedObj = items.find(i => i.key === pressedKey);
+
+        function beats(aKey, bKey) {
+            return (aKey === 'ArrowUp' && bKey === 'ArrowLeft') ||
+                   (aKey === 'ArrowLeft' && bKey === 'ArrowRight') ||
+                   (aKey === 'ArrowRight' && bKey === 'ArrowUp');
+        }
+
+        if (currentPerspective === 'me') {
+            // 좌측(나)이 누른 패가 우측(상대 패: fixedItem.key)을 이겨야 함
+            document.getElementById('left-content').innerText = pressedObj.name; // 내가 누른 패 시각화
+            if (beats(pressedKey, fixedItem.key)) isWin = true;
+        } else {
+            // 좌측(내 패: fixedItem.key)이 우측(상대가 누를 패: pressedKey)을 이겨야 함
+            document.getElementById('right-content').innerText = pressedObj.name; // 상대가 선택한 패 시각화
+            if (beats(fixedItem.key, pressedKey)) isWin = true;
+        }
+
+        let feedback = document.getElementById('feedback-msg');
+        if (isWin) {
+            score++;
+            document.getElementById('score').innerText = score;
+            feedback.style.color = "#4ade80";
+            feedback.innerText = "⭕ 정답!";
+        } else {
+            feedback.style.color = "#f43f5e";
+            feedback.innerText = "❌ 오답!";
+        }
+
+        // 0.2초 동안 결과(내가 누른 패/상대가 누른 패)를 눈으로 보여준 뒤 다음 턴으로 전환
+        gameActive = false;
+        setTimeout(() => {
+            if (timeLeft > 0) {
+                gameActive = true;
+                nextTurn();
+            }
+        }, 200);
+    }
+
+    function endGame() {
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('transition-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        
+        let finalDisplayScore = isFullRun ? totalScore : score;
+        document.getElementById('final-score').innerText = finalDisplayScore;
+    }
+</script>
+
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            if (document.getElementById("floating-back-btn")) return;
+            const btn = document.createElement("a");
+            btn.id = "floating-back-btn";
+            btn.href = "index.html";
+            btn.innerHTML = "🏠 메인으로";
+            btn.style.cssText = "position:fixed !important; top:20px !important; right:20px !important; z-index:2147483647 !important; background:#4f46e5 !important; color:white !important; padding:10px 20px !important; border-radius:30px !important; font-family:sans-serif !important; font-size:14px !important; font-weight:bold !important; text-decoration:none !important; box-shadow:0 4px 15px rgba(0,0,0,0.2) !important; cursor:pointer !important;";
+            btn.onclick = (e) => { e.preventDefault(); location.href = "index.html"; };
+            document.body.appendChild(btn);
+        });
+    </script>
+</body>
+</html>

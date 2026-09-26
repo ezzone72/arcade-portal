@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>약속 정하기 게임 | 난이도 조절 가능</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 760px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    border-radius: 24px;
+    padding: 28px 32px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  h1 { text-align: center; font-size: 1.75rem; margin-bottom: 6px; }
+  .subtitle { text-align: center; color: #a0aec0; margin-bottom: 24px; font-size: 0.95rem; }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ===== 설정 화면 ===== */
+  .settings-box {
+    background: rgba(0,0,0,0.28);
+    border-radius: 18px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+  .setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .setting-row:last-child { margin-bottom: 0; }
+  .setting-label { font-weight: 500; min-width: 140px; }
+  .setting-controls { display: flex; align-items: center; gap: 10px; }
+
+  .preset-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .preset-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,0.25);
+    background: transparent;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .preset-btn.active {
+    background: #3182ce;
+    border-color: #63b3ed;
+    color: white;
+  }
+  .preset-btn:hover { border-color: #63b3ed; }
+
+  input[type="range"] {
+    width: 140px;
+    accent-color: #4299e1;
+  }
+  .value-display {
+    min-width: 52px;
+    text-align: center;
+    font-weight: 700;
+    color: #63b3ed;
+  }
+
+  .tip {
+    background: rgba(99, 179, 237, 0.12);
+    border-left: 4px solid #63b3ed;
+    padding: 12px 16px;
+    border-radius: 0 12px 12px 0;
+    margin: 16px 0 8px;
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  /* 버튼 */
+  button.main-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(90deg, #4299e1, #3182ce);
+    color: white;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(66,153,225,0.4); }
+  .btn-secondary {
+    background: rgba(255,255,255,0.12);
+    color: #e2e8f0;
+    margin-top: 10px;
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+  /* 진행 */
+  .progress-bar {
+    height: 7px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #48bb78, #38a169);
+    transition: width 0.35s ease;
+  }
+  .round-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+    color: #a0aec0;
+  }
+
+  .category-badge {
+    display: inline-block;
+    background: #ed8936;
+    color: #1a202c;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    margin-bottom: 16px;
+  }
+
+  /* 플래시 */
+  .flash-area {
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.32);
+    border-radius: 18px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .friend-label {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    font-size: 0.88rem;
+    color: #90cdf4;
+  }
+  .pref-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding: 18px;
+  }
+  .pref-item {
+    background: #2d3748;
+    padding: 11px 18px;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    animation: pop 0.28s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .countdown {
+    font-size: 3.2rem;
+    font-weight: 700;
+    color: #f6ad55;
+  }
+
+  /* 선택지 */
+  .options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  .option-btn {
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 15px 10px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .option-btn:hover {
+    background: rgba(66,153,225,0.3);
+    border-color: #63b3ed;
+  }
+  .option-btn.selected { background: #3182ce; border-color: #63b3ed; }
+  .option-btn.correct { background: #276749 !important; border-color: #48bb78 !important; }
+  .option-btn.wrong { background: #742a2a !important; border-color: #fc8181 !important; }
+
+  /* 피드백 */
+  .feedback-box {
+    background: rgba(0,0,0,0.35);
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-top: 18px;
+    line-height: 1.6;
+  }
+  .feedback-box.correct { border-left: 5px solid #48bb78; }
+  .feedback-box.wrong { border-left: 5px solid #fc8181; }
+  .feedback-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 10px; }
+  .intersection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+  }
+  .intersection span {
+    background: #2b6cb0;
+    padding: 7px 13px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .score-big {
+    font-size: 3.6rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 16px 0;
+    color: #68d391;
+  }
+  .result-detail {
+    background: rgba(0,0,0,0.25);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    font-size: 0.95rem;
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ========== 설정 화면 ========== -->
+  <div id="settings" class="screen active">
+    <h1>약속 정하기 게임</h1>
+    <p class="subtitle">난이도 · 표시 시간 · 선지 수 조절 가능</p>
+
+    <div class="settings-box">
+      <!-- 프리셋 -->
+      <div class="setting-row">
+        <span class="setting-label">난이도 프리셋</span>
+        <div class="preset-btns">
+          <button class="preset-btn" data-preset="easy" onclick="applyPreset('easy')">쉬움</button>
+          <button class="preset-btn active" data-preset="normal" onclick="applyPreset('normal')">보통</button>
+          <button class="preset-btn" data-preset="hard" onclick="applyPreset('hard')">어려움</button>
+          <button class="preset-btn" data-preset="extreme" onclick="applyPreset('extreme')">극한</button>
+        </div>
+      </div>
+
+      <!-- 표시 시간 -->
+      <div class="setting-row">
+        <span class="setting-label">정보 표시 시간</span>
+        <div class="setting-controls">
+          <input type="range" id="timeRange" min="600" max="2500" step="100" value="1300" oninput="updateTimeDisplay()">
+          <span class="value-display" id="timeValue">1.3초</span>
+        </div>
+      </div>
+
+      <!-- 선지 수 -->
+      <div class="setting-row">
+        <span class="setting-label">선택지 개수</span>
+        <div class="setting-controls">
+          <input type="range" id="optionRange" min="4" max="10" step="1" value="6" oninput="updateOptionDisplay()">
+          <span class="value-display" id="optionValue">6개</span>
+        </div>
+      </div>
+
+      <!-- 라운드 수 -->
+      <div class="setting-row">
+        <span class="setting-label">라운드 수</span>
+        <div class="setting-controls">
+          <input type="range" id="roundRange" min="3" max="12" step="1" value="6" oninput="updateRoundDisplay()">
+          <span class="value-display" id="roundValue">6개</span>
+        </div>
+      </div>
+
+      <!-- 카운트다운 -->
+      <div class="setting-row">
+        <span class="setting-label">시작 카운트다운</span>
+        <div class="setting-controls">
+          <input type="range" id="countRange" min="0" max="5" step="1" value="3" oninput="updateCountDisplay()">
+          <span class="value-display" id="countValue">3초</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>소거법 팁</strong><br>
+      첫 번째 목록을 기억한 뒤, 다음 목록과 겹치지 않는 항목은 바로 지워 나가세요.<br>
+      전체를 외우려고 하지 말고 <strong>교집합만 남기는 것</strong>이 핵심입니다.
+    </div>
+
+    <button class="main-btn btn-primary" onclick="startGame()">게임 시작</button>
+  </div>
+
+  <!-- ========== 게임 화면 ========== -->
+  <div id="game" class="screen">
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+    <div class="round-info">
+      <span id="roundText">라운드 1 / 6</span>
+      <span id="scoreText">점수 0</span>
+    </div>
+
+    <div id="categoryBadge" class="category-badge">요일 정하기</div>
+
+    <div class="flash-area" id="flashArea">
+      <div class="friend-label" id="friendLabel"></div>
+      <div id="flashContent"></div>
+    </div>
+
+    <div id="choiceArea" class="hidden">
+      <p style="text-align:center; margin-bottom:14px; color:#a0aec0; font-size:0.95rem;">공통으로 나온 것을 고르세요</p>
+      <div class="options" id="options"></div>
+    </div>
+
+    <div id="feedbackArea" class="hidden"></div>
+  </div>
+
+  <!-- ========== 결과 화면 ========== -->
+  <div id="result" class="screen">
+    <h1>게임 종료!</h1>
+    <div class="score-big" id="finalScore">0 / 6</div>
+    <div class="result-detail" id="resultDetail"></div>
+    <button class="main-btn btn-primary" onclick="backToSettings()">설정으로 돌아가기</button>
+    <button class="main-btn btn-secondary" onclick="startGame()">같은 설정으로 다시 하기</button>
+  </div>
+</div>
+
+<script>
+// ========== 전체 문제 풀 (더 많은 라운드) ==========
+const allRounds = [
+  {
+    category: "요일 정하기",
+    friends: [
+      { name: "친구 A", prefs: ["월", "수", "금"] },
+      { name: "친구 B", prefs: ["화", "수", "토"] },
+      { name: "친구 C", prefs: ["수", "목", "일"] }
+    ],
+    correct: ["수"],
+    pool: ["월","화","수","목","금","토","일"],
+    explanation: "세 친구가 공통으로 가능한 요일은 '수' 하나뿐입니다."
+  },
+  {
+    category: "장소 정하기",
+    friends: [
+      { name: "친구 A", prefs: ["강남", "홍대", "이태원"] },
+      { name: "친구 B", prefs: ["홍대", "신촌", "건대"] },
+      { name: "친구 C", prefs: ["홍대", "잠실", "여의도"] }
+    ],
+    correct: ["홍대"],
+    pool: ["강남","홍대","신촌","이태원","건대","잠실","여의도","성수"],
+    explanation: "세 친구가 모두 선택한 장소는 '홍대'입니다."
+  },
+  {
+    category: "메뉴 정하기",
+    friends: [
+      { name: "친구 A", prefs: ["치킨", "피자", "햄버거"] },
+      { name: "친구 B", prefs: ["피자", "파스타", "샐러드"] },
+      { name: "친구 C", prefs: ["피자", "초밥", "라면"] }
+    ],
+    correct: ["피자"],
+    pool: ["치킨","피자","햄버거","파스타","초밥","라면","김치찌개","돈까스"],
+    explanation: "세 친구가 공통으로 원하는 메뉴는 '피자'입니다."
+  },
+  {
+    category: "버스 번호",
+    friends: [
+      { name: "친구 A", prefs: ["146", "360", "740"] },
+      { name: "친구 B", prefs: ["360", "472", "N13"] },
+      { name: "친구 C", prefs: ["360", "1000", "9401"] }
+    ],
+    correct: ["360"],
+    pool: ["146","360","472","740","N13","1000","9401","241"],
+    explanation: "세 친구가 공통으로 타고 온 버스 번호는 '360'입니다."
+  },
+  {
+    category: "요일 (조금 더 어려움)",
+    friends: [
+      { name: "친구 A", prefs: ["화", "목", "토", "일"] },
+      { name: "친구 B", prefs: ["월", "목", "금", "일"] },
+      { name: "친구 C", prefs: ["수", "목", "일"] }
+    ],
+    correct: ["목", "일"],
+    pool: ["월","화","수","목","금","토","일"],
+    explanation: "공통으로 가능한 요일은 '목'과 '일'입니다. (둘 중 하나만 골라도 정답 처리)"
+  },
+  {
+    category: "카페 메뉴",
+    friends: [
+      { name: "친구 A", prefs: ["아메리카노", "라떼", "스무디"] },
+      { name: "친구 B", prefs: ["라떼", "카푸치노", "티라미수"] },
+      { name: "친구 C", prefs: ["라떼", "아이스티", "크로플"] }
+    ],
+    correct: ["라떼"],
+    pool: ["아메리카노","라떼","카푸치노","스무디","아이스티","티라미수","크로플","에이드"],
+    explanation: "세 친구가 공통으로 고른 메뉴는 '라떼'입니다."
+  },
+  {
+    category: "영화 장르",
+    friends: [
+      { name: "친구 A", prefs: ["액션", "코미디", "SF"] },
+      { name: "친구 B", prefs: ["코미디", "로맨스", "스릴러"] },
+      { name: "친구 C", prefs: ["코미디", "애니메이션", "다큐"] }
+    ],
+    correct: ["코미디"],
+    pool: ["액션","코미디","SF","로맨스","스릴러","애니메이션","다큐","공포"],
+    explanation: "세 친구가 모두 좋아하는 장르는 '코미디'입니다."
+  },
+  {
+    category: "운동",
+    friends: [
+      { name: "친구 A", prefs: ["헬스", "러닝", "요가"] },
+      { name: "친구 B", prefs: ["러닝", "수영", "클라이밍"] },
+      { name: "친구 C", prefs: ["러닝", "필라테스", "자전거"] }
+    ],
+    correct: ["러닝"],
+    pool: ["헬스","러닝","요가","수영","클라이밍","필라테스","자전거","복싱"],
+    explanation: "세 친구가 공통으로 할 수 있는 운동은 '러닝'입니다."
+  },
+  {
+    category: "요일 (빠른 소거)",
+    friends: [
+      { name: "친구 A", prefs: ["월", "화", "수"] },
+      { name: "친구 B", prefs: ["수", "목", "금"] },
+      { name: "친구 C", prefs: ["수", "토", "일"] }
+    ],
+    correct: ["수"],
+    pool: ["월","화","수","목","금","토","일"],
+    explanation: "첫 목록에서 월·화·수를 기억하고, 이후 목록에서 수만 남기면 됩니다."
+  },
+  {
+    category: "식당 종류",
+    friends: [
+      { name: "친구 A", prefs: ["한식", "일식", "중식"] },
+      { name: "친구 B", prefs: ["일식", "양식", "분식"] },
+      { name: "친구 C", prefs: ["일식", "베트남", "멕시칸"] }
+    ],
+    correct: ["일식"],
+    pool: ["한식","일식","중식","양식","분식","베트남","멕시칸","태국"],
+    explanation: "세 친구가 공통으로 원하는 식당 종류는 '일식'입니다."
+  },
+  {
+    category: "버스 (숫자 집중)",
+    friends: [
+      { name: "친구 A", prefs: ["241", "360", "701"] },
+      { name: "친구 B", prefs: ["360", "472", "N16"] },
+      { name: "친구 C", prefs: ["360", "9403", "100"] }
+    ],
+    correct: ["360"],
+    pool: ["241","360","472","701","N16","9403","100","146"],
+    explanation: "공통 버스 번호는 '360'입니다."
+  },
+  {
+    category: "장소 (교집합 2개)",
+    friends: [
+      { name: "친구 A", prefs: ["성수", "성신", "혜화"] },
+      { name: "친구 B", prefs: ["성수", "왕십리", "혜화"] },
+      { name: "친구 C", prefs: ["성수", "혜화", "동대문"] }
+    ],
+    correct: ["성수", "혜화"],
+    pool: ["성수","성신","혜화","왕십리","동대문","을지로","을지로입구"],
+    explanation: "공통 장소는 '성수'와 '혜화'입니다. (둘 중 하나만 골라도 정답)"
+  }
+];
+
+// ========== 설정값 ==========
+let settings = {
+  flashTime: 1300,   // ms
+  optionCount: 6,
+  roundCount: 6,
+  countdown: 3
+};
+
+let currentRounds = [];
+let currentRound = 0;
+let score = 0;
+let selectedAnswer = null;
+let showingFeedback = false;
+
+// ========== 설정 UI 업데이트 ==========
+function updateTimeDisplay() {
+  const v = document.getElementById('timeRange').value;
+  document.getElementById('timeValue').textContent = (v / 1000).toFixed(1) + '초';
+  settings.flashTime = parseInt(v);
+  clearPresetActive();
+}
+function updateOptionDisplay() {
+  const v = document.getElementById('optionRange').value;
+  document.getElementById('optionValue').textContent = v + '개';
+  settings.optionCount = parseInt(v);
+  clearPresetActive();
+}
+function updateRoundDisplay() {
+  const v = document.getElementById('roundRange').value;
+  document.getElementById('roundValue').textContent = v + '개';
+  settings.roundCount = parseInt(v);
+  clearPresetActive();
+}
+function updateCountDisplay() {
+  const v = document.getElementById('countRange').value;
+  document.getElementById('countValue').textContent = v + '초';
+  settings.countdown = parseInt(v);
+  clearPresetActive();
+}
+
+function clearPresetActive() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+}
+
+function applyPreset(level) {
+  clearPresetActive();
+  document.querySelector(`[data-preset="${level}"]`).classList.add('active');
+
+  const presets = {
+    easy:    { flashTime: 2000, optionCount: 4, roundCount: 4, countdown: 3 },
+    normal:  { flashTime: 1300, optionCount: 6, roundCount: 6, countdown: 3 },
+    hard:    { flashTime: 900,  optionCount: 8, roundCount: 8, countdown: 2 },
+    extreme: { flashTime: 700,  optionCount: 10, roundCount: 10, countdown: 1 }
+  };
+  const p = presets[level];
+  settings = { ...p };
+
+  document.getElementById('timeRange').value = p.flashTime;
+  document.getElementById('optionRange').value = p.optionCount;
+  document.getElementById('roundRange').value = p.roundCount;
+  document.getElementById('countRange').value = p.countdown;
+
+  updateTimeDisplay();
+  updateOptionDisplay();
+  updateRoundDisplay();
+  updateCountDisplay();
+
+  // 프리셋 버튼 다시 active
+  document.querySelector(`[data-preset="${level}"]`).classList.add('active');
+}
+
+// ========== 게임 시작 ==========
+function startGame() {
+  // 설정값 최종 반영
+  settings.flashTime = parseInt(document.getElementById('timeRange').value);
+  settings.optionCount = parseInt(document.getElementById('optionRange').value);
+  settings.roundCount = parseInt(document.getElementById('roundRange').value);
+  settings.countdown = parseInt(document.getElementById('countRange').value);
+
+  // 라운드 섞어서 선택
+  const shuffled = [...allRounds].sort(() => Math.random() - 0.5);
+  currentRounds = shuffled.slice(0, settings.roundCount);
+
+  currentRound = 0;
+  score = 0;
+
+  document.getElementById('settings').classList.remove('active');
+  document.getElementById('result').classList.remove('active');
+  document.getElementById('game').classList.add('active');
+  playRound();
+}
+
+function backToSettings() {
+  document.getElementById('result').classList.remove('active');
+  document.getElementById('settings').classList.add('active');
+}
+
+// ========== 라운드 ==========
+function playRound() {
+  showingFeedback = false;
+  selectedAnswer = null;
+  const r = currentRounds[currentRound];
+
+  document.getElementById('roundText').textContent = `라운드 ${currentRound + 1} / ${currentRounds.length}`;
+  document.getElementById('scoreText').textContent = `점수 ${score}`;
+  document.getElementById('progress').style.width = `${(currentRound / currentRounds.length) * 100}%`;
+  document.getElementById('categoryBadge').textContent = r.category;
+  document.getElementById('choiceArea').classList.add('hidden');
+  document.getElementById('feedbackArea').classList.add('hidden');
+  document.getElementById('flashArea').classList.remove('hidden');
+
+  showCountdown(settings.countdown, () => {
+    flashPreferences(r.friends, 0, () => {
+      showChoices(r);
+    });
+  });
+}
+
+function showCountdown(n, callback) {
+  const content = document.getElementById('flashContent');
+  document.getElementById('friendLabel').textContent = "";
+  if (n > 0) {
+    content.innerHTML = `<div class="countdown">${n}</div>`;
+    setTimeout(() => showCountdown(n - 1, callback), 700);
+  } else {
+    content.innerHTML = "";
+    callback();
+  }
+}
+
+function flashPreferences(friends, idx, onDone) {
+  if (idx >= friends.length) {
+    document.getElementById('flashArea').classList.add('hidden');
+    onDone();
+    return;
+  }
+  const f = friends[idx];
+  document.getElementById('friendLabel').textContent = f.name;
+  const list = f.prefs.map(p => `<div class="pref-item">${p}</div>`).join('');
+  document.getElementById('flashContent').innerHTML = `<div class="pref-list">${list}</div>`;
+
+  setTimeout(() => {
+    document.getElementById('flashContent').innerHTML = "";
+    setTimeout(() => flashPreferences(friends, idx + 1, onDone), 350);
+  }, settings.flashTime);
+}
+
+function showChoices(r) {
+  const area = document.getElementById('choiceArea');
+  const opts = document.getElementById('options');
+  area.classList.remove('hidden');
+  opts.innerHTML = "";
+
+  // 정답 + 오답 섞어서 선지 생성
+  let choices = [...r.correct];
+  const distractors = r.pool.filter(p => !r.correct.includes(p));
+  while (choices.length < settings.optionCount && distractors.length > 0) {
+    const idx = Math.floor(Math.random() * distractors.length);
+    choices.push(distractors.splice(idx, 1)[0]);
+  }
+  // 부족하면 그냥 채움
+  while (choices.length < settings.optionCount) {
+    choices.push("?");
+  }
+  choices = choices.sort(() => Math.random() - 0.5).slice(0, settings.optionCount);
+
+  choices.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(opt, btn);
+    opts.appendChild(btn);
+  });
+}
+
+function selectAnswer(opt, btn) {
+  if (showingFeedback) return;
+  selectedAnswer = opt;
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  setTimeout(() => checkAnswer(), 280);
+}
+
+function checkAnswer() {
+  showingFeedback = true;
+  const r = currentRounds[currentRound];
+  const isCorrect = r.correct.includes(selectedAnswer);
+
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    if (r.correct.includes(btn.textContent)) {
+      btn.classList.add('correct');
+    } else if (btn.textContent === selectedAnswer) {
+      btn.classList.add('wrong');
+    }
+  });
+
+  const fb = document.getElementById('feedbackArea');
+  fb.classList.remove('hidden');
+  fb.innerHTML = `
+    <div class="feedback-box ${isCorrect ? 'correct' : 'wrong'}">
+      <div class="feedback-title">${isCorrect ? '✅ 정답입니다!' : '❌ 틀렸습니다'}</div>
+      <p><strong>정답 (교집합):</strong></p>
+      <div class="intersection">
+        ${r.correct.map(c => `<span>${c}</span>`).join('')}
+      </div>
+      <p style="margin-top:10px;">${r.explanation}</p>
+      ${!isCorrect ? `
+        <p style="margin-top:12px; color:#fc8181;">
+          당신이 고른 답: <strong>${selectedAnswer}</strong><br>
+          → 이 항목은 모든 친구에게 공통으로 나타나지 않았습니다.
+        </p>
+      ` : ''}
+      <button class="main-btn btn-primary" style="margin-top:18px;" onclick="nextRound()">
+        ${currentRound < currentRounds.length - 1 ? '다음 라운드' : '결과 보기'}
+      </button>
+    </div>
+  `;
+
+  if (isCorrect) score++;
+}
+
+function nextRound() {
+  currentRound++;
+  if (currentRound >= currentRounds.length) {
+    showResult();
+  } else {
+    playRound();
+  }
+}
+
+function showResult() {
+  document.getElementById('game').classList.remove('active');
+  document.getElementById('result').classList.add('active');
+  document.getElementById('finalScore').textContent = `${score} / ${currentRounds.length}`;
+  document.getElementById('progress').style.width = '100%';
+
+  let detail = `<p>총 <strong>${currentRounds.length}</strong>문제 중 <strong>${score}</strong>문제를 맞혔습니다.</p>
+                <p style="margin-top:8px; color:#a0aec0;">설정: 표시 ${settings.flashTime/1000}초 · 선지 ${settings.optionCount}개</p>
+                <ul style="margin-top:12px; padding-left:18px;">`;
+  currentRounds.forEach((r, i) => {
+    detail += `<li style="margin:5px 0;">${i+1}. ${r.category} → ${r.correct.join(', ')}</li>`;
+  });
+  detail += `</ul>`;
+  document.getElementById('resultDetail').innerHTML = detail;
+}
+
+// 초기 프리셋 표시
+applyPreset('normal');
+</script>
+</body>
+</html>

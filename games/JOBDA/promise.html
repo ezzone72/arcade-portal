@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>약속 정하기 게임</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --primary-color: #4f46e5;
+            --primary-light: #e0e7ff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --border-color: #e5e7eb;
+            --road-color: #374151;
+            --correct-color: #10b981;
+            --wrong-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            overflow: hidden;
+            position: relative;
+            min-height: 560px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            height: 60px;
+        }
+
+        .header-left {
+            font-size: 14px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .badge {
+            background: #f3f4f6;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .timer-box {
+            background: #f3f4f6;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: #e5e7eb;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .person-name {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 30px;
+            color: #111827;
+        }
+
+        .question-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #111827;
+        }
+
+        /* Round 1: 요일 */
+        .days-flex {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .day-card {
+            width: 80px;
+            height: 80px;
+            background: #f9fafb;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .day-card.clickable:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        /* Round 2: 장소 */
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            width: 320px;
+            height: 320px;
+            background: #e5e7eb;
+            padding: 10px;
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .map-grid::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0;
+            width: 100%; height: 24px;
+            background: var(--road-color);
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .map-grid::after {
+            content: '';
+            position: absolute;
+            left: 50%; top: 0;
+            width: 24px; height: 100%;
+            background: var(--road-color);
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+
+        .map-cell {
+            background: #ffffff;
+            border-radius: 8px;
+            z-index: 2;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: background-color 0.1s ease;
+        }
+
+        .map-cell.highlight {
+            border-color: #10b981;
+            background-color: #d1fae5;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+
+        .map-cell.clickable:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+        }
+
+        /* Round 3: 메뉴 */
+        .tray-container {
+            background: #fef3c7;
+            border: 4px solid #f59e0b;
+            border-radius: 20px;
+            padding: 20px 30px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 500px;
+        }
+
+        .food-item {
+            width: 80px;
+            height: 80px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            cursor: pointer;
+            border: 2px solid var(--border-color);
+            transition: all 0.15s ease;
+        }
+
+        .food-item.clickable:hover {
+            border-color: var(--primary-color);
+            transform: scale(1.08);
+        }
+
+        .food-item svg { width: 50px; height: 50px; }
+
+        /* Round 4: 버스 */
+        .bus-list {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .bus-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .bus-number-badge {
+            background: #374151;
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 800;
+            padding: 8px 16px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .bus-icon {
+            width: 60px; height: 36px;
+            background: #3b82f6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 4px;
+        }
+
+        .bus-window {
+            width: 10px; height: 10px;
+            background: #93c5fd;
+            border-radius: 2px;
+        }
+
+        .bus-choice-flex {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .bus-choice-btn {
+            min-width: 90px; height: 70px;
+            background: #f9fafb;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 24px;
+            font-weight: 800;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .bus-choice-btn:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-light);
+        }
+
+        /* 대기 & 리포트 CSS */
+        .standby-card {
+            text-align: left;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .standby-title {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .standby-desc {
+            font-size: 15px;
+            color: var(--text-sub);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .result-box {
+            background: #f9fafb;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .result-score {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .result-item {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .result-item.correct {
+            border-color: var(--correct-color);
+            background: #ecfdf5;
+            color: var(--correct-color);
+            font-weight: 700;
+        }
+
+        .result-item.wrong {
+            border-color: var(--wrong-color);
+            background: #fef2f2;
+            color: var(--wrong-color);
+            font-weight: 700;
+        }
+
+        .btn-action {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn-action:hover { background: #4338ca; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="top-bar">
+        <div class="header-left" id="headerLeft">약속 정하기</div>
+        <div class="header-right">
+            <div class="badge" id="questionBadge">남은 문항 10</div>
+            <div class="timer-box" id="timerBox">3</div>
+        </div>
+    </div>
+    
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+
+    <div class="content-area" id="contentArea"></div>
+</div>
+
+<script>
+const FOOD_SVGS = [
+    `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#f59e0b"/><circle cx="50" cy="50" r="38" fill="#ef4444"/><circle cx="35" cy="40" r="6" fill="#fef08a"/><circle cx="65" cy="45" r="7" fill="#fef08a"/><circle cx="48" cy="65" r="6" fill="#fef08a"/><circle cx="55" cy="30" r="4" fill="#78350f"/></svg>`,
+    `<svg viewBox="0 0 100 100"><path d="M 20 45 A 30 30 0 0 1 80 45 Z" fill="#d97706"/><rect x="18" y="47" width="64" height="6" rx="3" fill="#16a34a"/><rect x="15" y="55" width="70" height="8" rx="4" fill="#b91c1c"/><rect x="20" y="65" width="60" height="12" rx="6" fill="#d97706"/></svg>`,
+    `<svg viewBox="0 0 100 100"><rect x="20" y="50" width="60" height="25" rx="12" fill="#f3f4f6"/><path d="M 18 52 Q 50 30 82 52 Z" fill="#ef4444"/><rect x="42" y="40" width="16" height="35" fill="#1f2937"/></svg>`,
+    `<svg viewBox="0 0 100 100"><path d="M 15 40 A 35 35 0 0 0 85 40 Z" fill="#dc2626"/><path d="M 20 40 Q 50 50 80 40" stroke="#fef08a" stroke-width="8" fill="none"/><circle cx="50" cy="35" r="10" fill="#ffffff"/><circle cx="50" cy="35" r="6" fill="#f59e0b"/></svg>`,
+    `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="55" rx="38" ry="22" fill="#b45309"/><ellipse cx="50" cy="52" rx="34" ry="18" fill="#d97706"/><line x1="25" y1="45" x2="75" y2="58" stroke="#78350f" stroke-width="3"/><line x1="30" y1="55" x2="70" y2="42" stroke="#78350f" stroke-width="3"/></svg>`,
+    `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#111827"/><circle cx="50" cy="50" r="32" fill="#ffffff"/><circle cx="50" cy="50" r="18" fill="#f59e0b"/><circle cx="42" cy="45" r="6" fill="#ef4444"/><circle cx="58" cy="45" r="6" fill="#16a34a"/></svg>`,
+    `<svg viewBox="0 0 100 100"><path d="M 30 65 Q 15 70 20 85 Q 35 85 40 70 Z" fill="#f3f4f6"/><ellipse cx="60" cy="45" rx="25" ry="20" fill="#b45309"/><ellipse cx="58" cy="43" rx="22" ry="17" fill="#d97706"/></svg>`,
+    `<svg viewBox="0 0 100 100"><ellipse cx="45" cy="50" rx="30" ry="20" fill="#d97706"/><path d="M 70 50 L 88 35 L 88 65 Z" fill="#d97706"/><circle cx="30" cy="45" r="3" fill="#78350f"/></svg>`,
+    `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="40" ry="20" fill="#e5e7eb"/><path d="M 20 55 C 20 40, 80 40, 80 55 Z" fill="#b45309"/><circle cx="40" cy="48" r="4" fill="#ffffff"/><circle cx="55" cy="46" r="5" fill="#ffffff"/></svg>`,
+    `<svg viewBox="0 0 100 100"><path d="M 15 60 Q 50 15 85 60 Z" fill="#fef3c7"/><path d="M 15 60 Q 50 75 85 60 Z" fill="#fde68a"/><path d="M 30 45 Q 35 35 40 45 Q 50 35 60 45 Q 65 35 70 45" stroke="#d97706" stroke-width="2" fill="none"/></svg>`
+];
+
+const PEOPLE = ['영희', '미미', '철수'];
+const DAYS = ['월', '화', '수', '목', '금', '토', '일'];
+
+let currentRound = 1;
+let currentQuestion = 1; 
+let totalQuestions = 10;
+let timerInterval = null;
+let progressAnimation = null;
+
+let gameResults = { 1: [], 2: [], 3: [], 4: [] };
+let currentQData = null;
+
+const headerLeft = document.getElementById('headerLeft');
+const questionBadge = document.getElementById('questionBadge');
+const timerBox = document.getElementById('timerBox');
+const progressBar = document.getElementById('progressBar');
+const contentArea = document.getElementById('contentArea');
+
+showStartScreen();
+
+function showStartScreen() {
+    headerLeft.innerText = "약속 정하기";
+    questionBadge.style.display = "none";
+    timerBox.style.display = "none";
+    
+    gameResults = { 1: [], 2: [], 3: [], 4: [] };
+
+    contentArea.innerHTML = `
+        <div class="standby-card" style="text-align: center;">
+            <h2 class="standby-title">약속 정하기 게임</h2>
+            <p class="standby-desc">
+                세 친구(영희, 미미, 철수)가 원하는 조건이 1초씩 지나갑니다.<br>
+                조건을 잘 기억한 뒤 <b>3초 안에</b> 정답을 골라주세요!<br><br>
+                <b>각 라운드가 끝난 후 맞힌 개수와 정답/오답 리포트가 공개됩니다.</b>
+            </p>
+            <button class="btn-action" onclick="startRoundStandby(1)">게임 시작하기</button>
+        </div>
+    `;
+}
+
+function startRoundStandby(round) {
+    currentRound = round;
+    currentQuestion = 1;
+    
+    headerLeft.innerText = `약속 정하기 - 라운드 ${currentRound}`;
+    questionBadge.style.display = "none";
+    timerBox.style.display = "none";
+    
+    let descriptions = [
+        "",
+        "<b>1라운드: 요일 정하기</b><br>3명 모두 공통으로 선호하는 요일을 선택하세요.",
+        "<b>2라운드: 장소 정하기</b><br>3명 모두 공통으로 원하는 지도 상의 위치를 선택하세요.",
+        "<b>3라운드: 메뉴 정하기</b><br>3명 모두 공통으로 원하는 메뉴를 선택하세요.",
+        "<b>4라운드: 버스 번호 정하기 (주의!)</b><br><b>아무도 타고 오지 않은 버스 번호</b>를 선택하세요."
+    ];
+
+    let prevReportHtml = "";
+    if (round > 1) {
+        let prevRound = round - 1;
+        let results = gameResults[prevRound];
+        let correctCount = results.filter(r => r.correct).length;
+
+        prevReportHtml = `
+            <div class="result-box">
+                <div class="result-score">
+                    <span>라운드 ${prevRound} 결과</span>
+                    <span>${correctCount} / 10 문제 정답</span>
+                </div>
+                <div class="result-grid">
+        `;
+
+        results.forEach(r => {
+            let statusClass = r.correct ? 'correct' : 'wrong';
+            let mark = r.correct ? 'O' : 'X';
+            prevReportHtml += `<div class="result-item ${statusClass}">${r.qNum}번: ${mark}</div>`;
+        });
+
+        prevReportHtml += `</div></div>`;
+    }
+
+    contentArea.innerHTML = `
+        <div class="standby-card">
+            ${prevReportHtml}
+            <h2 class="standby-title">다음: 라운드 ${currentRound}</h2>
+            <p class="standby-desc">${descriptions[currentRound]}</p>
+            <p style="color: var(--primary-color); font-weight:700; text-align:center;">10초 후 자동으로 시작합니다.</p>
+        </div>
+    `;
+
+    runProgressBar(10, () => {
+        runQuestion();
+    });
+}
+
+function runQuestion() {
+    if (currentQuestion > totalQuestions) {
+        if (currentRound < 4) {
+            startRoundStandby(currentRound + 1);
+        } else {
+            showFinishScreen();
+        }
+        return;
+    }
+
+    questionBadge.style.display = "block";
+    questionBadge.innerText = `남은 문항 ${totalQuestions - currentQuestion + 1}`;
+    timerBox.style.display = "none";
+    
+    currentQData = generateQuestionData(currentRound, currentQuestion);
+
+    let personIndex = 0;
+    
+    // 사람 전환 사이 완전 지우기 연출 (0.85초 표시 + 0.15초 블랭크)
+    function showNextPerson() {
+        if (personIndex < 3) {
+            // 1. 해당 사람 표시
+            renderPersonView(PEOPLE[personIndex], currentQData.personChoices[personIndex]);
+            personIndex++;
+
+            // 2. 0.85초 후 잔상 지우기 (Blank Screen)
+            setTimeout(() => {
+                if (personIndex <= 3) {
+                    renderBlankView();
+                }
+            }, 850);
+
+            // 3. 총 1초 주기 맞추고 다음 사람 진행
+            setTimeout(showNextPerson, 1000);
+        } else {
+            // 선택 화면 전환
+            renderChoiceView(currentQData);
+        }
+    }
+
+    showNextPerson();
+}
+
+// 잔상 지우기용 빈 화면 (사람 변경 순간)
+function renderBlankView() {
+    if (currentRound === 2) {
+        // 지도의 기본 틀만 남기고 색상 완전히 클리어
+        contentArea.innerHTML = `
+            <div class="person-name">&nbsp;</div>
+            <div class="map-grid">
+                ${Array(16).fill('<div class="map-cell"></div>').join('')}
+            </div>
+        `;
+    } else {
+        contentArea.innerHTML = `<div class="person-name">&nbsp;</div>`;
+    }
+}
+
+function generateQuestionData(round, qNum) {
+    let isHard = qNum >= 6;
+
+    if (round === 1) {
+        let count = isHard ? 4 : 3;
+        let common = DAYS[Math.floor(Math.random() * DAYS.length)];
+        let choices = [];
+        
+        for (let i = 0; i < 3; i++) {
+            let pool = DAYS.filter(d => d !== common);
+            shuffleArray(pool);
+            let pChoice = [common, ...pool.slice(0, count - 1)];
+            shuffleArray(pChoice);
+            choices.push(pChoice);
+        }
+        return { common, personChoices: choices };
+    } 
+    else if (round === 2) {
+        let quads = [
+            [0,1,4,5], [2,3,6,7], [8,9,12,13], [10,11,14,15]
+        ];
+
+        let targetQuadIdx = Math.floor(Math.random() * 4);
+        let commonCell = quads[targetQuadIdx][Math.floor(Math.random() * 4)];
+
+        let choices = [];
+        for (let i = 0; i < 3; i++) {
+            let pChoice = [commonCell];
+            let quadPool = [0, 1, 2, 3];
+            
+            if (isHard) {
+                quadPool.forEach(qIdx => {
+                    if (qIdx !== targetQuadIdx) {
+                        pChoice.push(quads[qIdx][Math.floor(Math.random() * 4)]);
+                    }
+                });
+            } else {
+                let remainingQuads = quadPool.filter(q => q !== targetQuadIdx);
+                shuffleArray(remainingQuads);
+                remainingQuads.slice(0, 2).forEach(qIdx => {
+                    pChoice.push(quads[qIdx][Math.floor(Math.random() * 4)]);
+                });
+            }
+            shuffleArray(pChoice);
+            choices.push(pChoice);
+        }
+        return { common: commonCell, personChoices: choices };
+    }
+    else if (round === 3) {
+        let count = isHard ? 4 : 3;
+        let optionCount = isHard ? 8 : 6;
+        let common = Math.floor(Math.random() * 10);
+        
+        let choices = [];
+        let allUsed = new Set([common]);
+
+        for (let i = 0; i < 3; i++) {
+            let pool = [0,1,2,3,4,5,6,7,8,9].filter(f => f !== common);
+            shuffleArray(pool);
+            let pChoice = [common, ...pool.slice(0, count - 1)];
+            pChoice.forEach(item => allUsed.add(item));
+            shuffleArray(pChoice);
+            choices.push(pChoice);
+        }
+
+        let options = Array.from(allUsed);
+        let remainPool = [0,1,2,3,4,5,6,7,8,9].filter(f => !options.includes(f));
+        shuffleArray(remainPool);
+        while (options.length < optionCount) {
+            options.push(remainPool.pop());
+        }
+        shuffleArray(options);
+
+        return { common, personChoices: choices, options };
+    }
+    else if (round === 4) {
+        let choicesCount = isHard ? [2,2,2] : [2,1,2];
+        let totalBusCount = isHard ? 6 : 5;
+
+        let busPool = [];
+        while(busPool.length < 15) {
+            let num = Math.floor(Math.random() * 900) + 10;
+            if(!busPool.includes(num)) busPool.push(num);
+        }
+
+        let notTakenBus = busPool[0];
+        let optionBuses = busPool.slice(0, totalBusCount);
+        let takenPool = optionBuses.filter(b => b !== notTakenBus);
+        
+        let choices = [];
+        let poolIdx = 0;
+        choicesCount.forEach(cnt => {
+            let pChoice = [];
+            for(let c=0; c<cnt; c++) {
+                pChoice.push(takenPool[poolIdx % takenPool.length]);
+                poolIdx++;
+            }
+            choices.push(pChoice);
+        });
+
+        shuffleArray(optionBuses);
+        return { common: notTakenBus, personChoices: choices, options: optionBuses };
+    }
+}
+
+function renderPersonView(name, choices) {
+    let contentHtml = `<div class="person-name">${name}</div>`;
+
+    if (currentRound === 1) {
+        contentHtml += `<div class="days-flex">`;
+        choices.forEach(d => { contentHtml += `<div class="day-card">${d}</div>`; });
+        contentHtml += `</div>`;
+    } 
+    else if (currentRound === 2) {
+        contentHtml += `<div class="map-grid">`;
+        for (let i = 0; i < 16; i++) {
+            let isHighlight = choices.includes(i) ? 'highlight' : '';
+            contentHtml += `<div class="map-cell ${isHighlight}"></div>`;
+        }
+        contentHtml += `</div>`;
+    } 
+    else if (currentRound === 3) {
+        contentHtml += `<div class="tray-container">`;
+        choices.forEach(fIdx => { contentHtml += `<div class="food-item">${FOOD_SVGS[fIdx]}</div>`; });
+        contentHtml += `</div>`;
+    } 
+    else if (currentRound === 4) {
+        contentHtml += `<div class="bus-list">`;
+        choices.forEach(bNum => {
+            contentHtml += `
+                <div class="bus-card">
+                    <div class="bus-number-badge">${bNum}</div>
+                    <div class="bus-icon">
+                        <div class="bus-window"></div>
+                        <div class="bus-window"></div>
+                    </div>
+                </div>
+            `;
+        });
+        contentHtml += `</div>`;
+    }
+
+    contentArea.innerHTML = contentHtml;
+}
+
+function renderChoiceView(qData) {
+    timerBox.style.display = "flex";
+    
+    let titleText = "";
+    if (currentRound === 1) titleText = "약속 요일을 언제로 잡으면 좋을까요?";
+    else if (currentRound === 2) titleText = "어떤 장소에서 만나면 좋을까요?";
+    else if (currentRound === 3) titleText = "어떤 메뉴를 선택하면 좋을까요?";
+    else if (currentRound === 4) titleText = "누구도 탑승하지 않은 버스 번호는 몇 번일까요?";
+
+    let contentHtml = `<div class="question-title">${titleText}</div>`;
+
+    if (currentRound === 1) {
+        contentHtml += `<div class="days-flex">`;
+        DAYS.forEach(d => {
+            contentHtml += `<div class="day-card clickable" onclick="selectAnswer('${d}')">${d}</div>`;
+        });
+        contentHtml += `</div>`;
+    } 
+    else if (currentRound === 2) {
+        contentHtml += `<div class="map-grid">`;
+        for (let i = 0; i < 16; i++) {
+            contentHtml += `<div class="map-cell clickable" onclick="selectAnswer(${i})"></div>`;
+        }
+        contentHtml += `</div>`;
+    } 
+    else if (currentRound === 3) {
+        contentHtml += `<div class="food-grid">`;
+        qData.options.forEach(fIdx => {
+            contentHtml += `<div class="food-item clickable" onclick="selectAnswer(${fIdx})">${FOOD_SVGS[fIdx]}</div>`;
+        });
+        contentHtml += `</div>`;
+    } 
+    else if (currentRound === 4) {
+        contentHtml += `<div class="bus-choice-flex">`;
+        qData.options.forEach(bNum => {
+            contentHtml += `<div class="bus-choice-btn" onclick="selectAnswer(${bNum})">${bNum}</div>`;
+        });
+        contentHtml += `</div>`;
+    }
+
+    contentArea.innerHTML = contentHtml;
+
+    runProgressBar(3, () => {
+        recordAndNext(null);
+    });
+}
+
+function selectAnswer(userVal) {
+    clearTimers();
+    recordAndNext(userVal);
+}
+
+function recordAndNext(userVal) {
+    let isCorrect = (userVal === currentQData.common);
+    
+    gameResults[currentRound].push({
+        qNum: currentQuestion,
+        correct: isCorrect,
+        userChoice: userVal,
+        answerChoice: currentQData.common
+    });
+
+    currentQuestion++;
+    runQuestion();
+}
+
+function runProgressBar(seconds, onComplete) {
+    clearTimers();
+    
+    let startTime = Date.now();
+    let endTime = startTime + (seconds * 1000);
+    
+    timerBox.innerText = seconds;
+
+    timerInterval = setInterval(() => {
+        let now = Date.now();
+        let remainingSec = Math.ceil((endTime - now) / 1000);
+        
+        if (remainingSec >= 0) {
+            timerBox.innerText = remainingSec;
+        }
+
+        if (now >= endTime) {
+            clearTimers();
+            if (onComplete) onComplete();
+        }
+    }, 100);
+
+    progressBar.style.width = "0%";
+    
+    function updateBar() {
+        let now = Date.now();
+        let elapsed = now - startTime;
+        let percentage = (elapsed / (seconds * 1000)) * 100;
+        
+        if (percentage <= 100) {
+            progressBar.style.width = `${percentage}%`;
+            progressAnimation = requestAnimationFrame(updateBar);
+        } else {
+            progressBar.style.width = "100%";
+        }
+    }
+    
+    progressAnimation = requestAnimationFrame(updateBar);
+}
+
+function clearTimers() {
+    if (timerInterval) clearInterval(timerInterval);
+    if (progressAnimation) cancelAnimationFrame(progressAnimation);
+    progressBar.style.width = "0%";
+}
+
+function showFinishScreen() {
+    clearTimers();
+    headerLeft.innerText = "게임 종료 - 종합 결과";
+    questionBadge.style.display = "none";
+    timerBox.style.display = "none";
+
+    let totalScore = 0;
+    let summaryHtml = "";
+
+    for (let r = 1; r <= 4; r++) {
+        let results = gameResults[r];
+        let correctCount = results.filter(res => res.correct).length;
+        totalScore += correctCount;
+
+        summaryHtml += `
+            <div class="result-box">
+                <div class="result-score">
+                    <span>라운드 ${r}</span>
+                    <span>${correctCount} / 10 정답</span>
+                </div>
+                <div class="result-grid">
+        `;
+        results.forEach(res => {
+            let statusClass = res.correct ? 'correct' : 'wrong';
+            let mark = res.correct ? 'O' : 'X';
+            summaryHtml += `<div class="result-item ${statusClass}">${res.qNum}번: ${mark}</div>`;
+        });
+        summaryHtml += `</div></div>`;
+    }
+
+    contentArea.innerHTML = `
+        <div class="standby-card">
+            <h2 class="standby-title" style="text-align: center;">🎉 총점: ${totalScore} / 40 점</h2>
+            <br>
+            ${summaryHtml}
+            <button class="btn-action" onclick="showStartScreen()">다시 도전하기</button>
+        </div>
+    `;
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+</script>
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            if (document.getElementById("floating-back-btn")) return;
+            const btn = document.createElement("a");
+            btn.id = "floating-back-btn";
+            btn.href = "index.html";
+            btn.innerHTML = "🏠 메인으로";
+            btn.style.cssText = "position:fixed !important; top:20px !important; right:20px !important; z-index:2147483647 !important; background:#4f46e5 !important; color:white !important; padding:10px 20px !important; border-radius:30px !important; font-family:sans-serif !important; font-size:14px !important; font-weight:bold !important; text-decoration:none !important; box-shadow:0 4px 15px rgba(0,0,0,0.2) !important; cursor:pointer !important;";
+            btn.onclick = (e) => { e.preventDefault(); location.href = "index.html"; };
+            document.body.appendChild(btn);
+        });
+    </script>
+</body>
+</html>

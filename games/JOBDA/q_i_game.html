@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quickness & Instruction Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-card {
+            width: 800px;
+            height: 520px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Header Navigation */
+        .card-header {
+            padding: 24px 32px 0 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #666;
+            display: flex;
+            gap: 20px;
+        }
+
+        .game-title span.active {
+            color: #222;
+        }
+
+        .timer-badge {
+            background-color: #f5f6f8;
+            color: #338cf5;
+            font-weight: 700;
+            font-size: 18px;
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: 1px solid #e1e4e8;
+        }
+
+        .timer-badge.warning {
+            color: #ff4d4f;
+            background-color: #fff1f0;
+            border-color: #ffa39e;
+        }
+
+        /* Screen Views */
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 40px;
+            position: relative;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Guide Screen CSS */
+        .guide-container {
+            display: flex;
+            width: 100%;
+            height: 250px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 30px;
+        }
+
+        .guide-preview {
+            flex: 1;
+            height: 100%;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #fafafa;
+        }
+
+        .guide-preview-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #444;
+            text-align: center;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .guide-instructions {
+            flex: 1.2;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .guide-instructions p {
+            font-size: 14px;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: #4c6ef5;
+            transition: width 0.1s linear;
+        }
+
+        .auto-start-text {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #338cf5;
+            font-weight: 700;
+        }
+
+        .btn-start {
+            background: #338cf5;
+            color: white;
+            border: none;
+            padding: 12px 36px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-start:hover {
+            background: #2572d4;
+        }
+
+        /* Keypad CSS */
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            grid-gap: 12px;
+            margin-top: 15px;
+        }
+
+        .key-btn {
+            width: 80px;
+            height: 80px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 26px;
+            font-weight: 700;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .key-btn:hover {
+            background: #f1f3f5;
+        }
+
+        .key-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* 1R Active Highlight */
+        .key-btn.highlight {
+            border: 3px solid #20c997;
+            color: #20c997;
+            background: #ffffff;
+        }
+
+        /* Feedback Status Banner */
+        .status-message {
+            font-size: 22px;
+            font-weight: 800;
+            color: #222;
+            margin-bottom: 8px;
+        }
+
+        .feedback-banner {
+            width: 100%;
+            max-width: 480px;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .feedback-banner.success {
+            display: block;
+            background-color: #e6fcf5;
+            color: #0ca678;
+            border: 1px solid #96f2d7;
+        }
+
+        .feedback-banner.error {
+            display: block;
+            background-color: #fff5f5;
+            color: #f03e3e;
+            border: 1px solid #ffc9c9;
+        }
+
+        /* Rules Instruction Badge (Round 2) */
+        .rule-badges-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .rule-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #e6fcf5;
+            border: 1px solid #96f2d7;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #0ca678;
+        }
+
+        .rule-badge .num-box {
+            background: #ffffff;
+            border: 1px solid #96f2d7;
+            border-radius: 6px;
+            padding: 2px 8px;
+            color: #0ca678;
+        }
+
+        /* Dot Indicator (Round 2) */
+        .step-indicator-bar {
+            width: 260px;
+            height: 32px;
+            border: 1px solid #e9ecef;
+            border-radius: 16px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: #fafafa;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #dee2e6;
+            transition: all 0.2s ease;
+        }
+
+        .dot.active {
+            background: #20c997;
+            transform: scale(1.2);
+        }
+
+        .dot.error {
+            background: #495057;
+        }
+
+        /* Round Result Screen */
+        .result-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #222;
+            margin-bottom: 20px;
+        }
+
+        .result-score-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 16px;
+            padding: 24px 40px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .result-score-box p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .result-score-box h2 {
+            font-size: 40px;
+            color: #338cf5;
+            font-weight: 800;
+        }
+
+        .btn-next {
+            background: #338cf5;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-next:hover {
+            background: #2572d4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-card">
+        <!-- Card Header -->
+        <div class="card-header">
+            <div class="game-title">
+                <span>숫자 누르기</span>
+                <span id="round-label" class="active">라운드 1</span>
+            </div>
+            <div class="timer-badge" id="timer-display" style="display: none;">01:00</div>
+        </div>
+
+        <!-- SCREEN 1: Round 1 Guide -->
+        <div class="screen active" id="screen-r1-guide">
+            <div class="guide-container">
+                <div class="guide-preview">
+                    <div class="guide-preview-title">활성화된 숫자를<br>최대한 빠르게 눌러 주세요</div>
+                    <div class="keypad-grid" style="grid-template-columns: repeat(3, 36px); grid-gap: 6px;">
+                        <div class="key-btn" style="width:36px; height:36px; font-size:12px;">1</div>
+                        <div class="key-btn" style="width:36px; height:36px; font-size:12px;">2</div>
+                        <div class="key-btn" style="width:36px; height:36px; font-size:12px;">3</div>
+                        <div class="key-btn" style="width:36px; height:36px; font-size:12px;">4</div>
+                        <div class="key-btn" style="width:36px; height:36px; font-size:12px;">5</div>
+                        <div class="key-btn highlight" style="width:36px; height:36px; font-size:12px;">6</div>
+                        <div class="key-btn" style="width:36px; height:36px; font-size:12px;">7</div>
+                        <div class="key-btn" style="width:36px; height:36px; font-size:12px;">8</div>
+                        <div class="key-btn" style="width:36px; height:36px; font-size:12px;">9</div>
+                    </div>
+                </div>
+                <div class="guide-instructions">
+                    <p>1. 신호가 제시되면 1부터 9까지 숫자 중 하나의 숫자가 활성화됩니다.</p>
+                    <p>2. 활성화된 숫자를 빠르게 눌러 주세요.</p>
+                    <p>3. 각 문항에서 숫자들은 동일한 위치에 제시됩니다.</p>
+                    <p>4. 제한 시간 60초 내에 최대한 많은 문제를 풀어 주세요.</p>
+                </div>
+            </div>
+            <button class="btn-start" id="btn-start-r1" onclick="startRound1Countdown()">시작하기</button>
+            <div class="progress-bar-container" id="r1-progress-container" style="display: none;">
+                <div class="progress-bar-fill" id="r1-guide-progress"></div>
+            </div>
+            <div class="auto-start-text" id="r1-guide-countdown" style="display: none;">8초가 지나면 자동으로 시작합니다.</div>
+        </div>
+
+        <!-- SCREEN 2: Round 1 Play & Wait Screen -->
+        <div class="screen" id="screen-r1-play">
+            <div class="status-message" id="r1-status-title">준비</div>
+            <div class="feedback-banner" id="r1-feedback"></div>
+            
+            <div class="keypad-grid" id="r1-keypad">
+                <!-- 1~9 Fixed Buttons -->
+            </div>
+        </div>
+
+        <!-- SCREEN 3: Round 2 Guide -->
+        <div class="screen" id="screen-r2-guide">
+            <div class="guide-container">
+                <div class="guide-preview">
+                    <div class="guide-preview-title">지시문과 같이 활성화된 버튼을 눌러 주세요</div>
+                    <div class="rule-badges-container" style="transform: scale(0.8); margin-bottom: 2px;">
+                        <div class="rule-badge" style="padding: 2px 6px; font-size: 10px;">🖱️ 2번 클릭 <span class="num-box">5</span><span class="num-box">8</span></div>
+                        <div class="rule-badge" style="padding: 2px 6px; font-size: 10px;">🚫 건너뛰기 <span class="num-box">3</span></div>
+                    </div>
+                    <div class="keypad-grid" style="grid-template-columns: repeat(3, 32px); grid-gap: 4px;">
+                        <div class="key-btn" style="width:32px; height:32px; font-size:11px;">8</div>
+                        <div class="key-btn" style="width:32px; height:32px; font-size:11px;">3</div>
+                        <div class="key-btn" style="width:32px; height:32px; font-size:11px;">6</div>
+                        <div class="key-btn" style="width:32px; height:32px; font-size:11px;">5</div>
+                        <div class="key-btn" style="width:32px; height:32px; font-size:11px;">9</div>
+                        <div class="key-btn" style="width:32px; height:32px; font-size:11px;">2</div>
+                        <div class="key-btn" style="width:32px; height:32px; font-size:11px;">7</div>
+                        <div class="key-btn" style="width:32px; height:32px; font-size:11px;">1</div>
+                        <div class="key-btn" style="width:32px; height:32px; font-size:11px;">4</div>
+                    </div>
+                </div>
+                <div class="guide-instructions">
+                    <p>1. 신호가 제시되면 '두 번 클릭' 혹은 '건너뛰기'할 숫자들이 제시됩니다.</p>
+                    <p>2. 규칙에 주의하여 1부터 9까지 빠르게 눌러 주세요.</p>
+                    <p>3. 각 문항에서 숫자들은 무작위로 배열되어 제시됩니다.</p>
+                    <p>4. 제한 시간 120초 내에 최대한 많은 문제를 풀어 주세요.</p>
+                </div>
+            </div>
+            <button class="btn-start" id="btn-start-r2" onclick="startRound2Countdown()">시작하기</button>
+            <div class="progress-bar-container" id="r2-progress-container" style="display: none;">
+                <div class="progress-bar-fill" id="r2-guide-progress"></div>
+            </div>
+            <div class="auto-start-text" id="r2-guide-countdown" style="display: none;">9초가 지나면 자동으로 시작합니다.</div>
+        </div>
+
+        <!-- SCREEN 4: Round 2 Play & Wait Screen -->
+        <div class="screen" id="screen-r2-play">
+            <div class="status-message" id="r2-status-title">준비</div>
+            
+            <div class="rule-badges-container" id="r2-rule-container" style="visibility: hidden;">
+                <div class="rule-badge">🖱️ 2번 클릭 <span id="double-list"></span></div>
+                <div class="rule-badge">🚫 건너뛰기 <span id="skip-list"></span></div>
+            </div>
+
+            <div class="feedback-banner" id="r2-feedback"></div>
+            
+            <div class="keypad-grid" id="r2-keypad">
+                <!-- Random Shuffled Buttons -->
+            </div>
+
+            <div class="step-indicator-bar" id="r2-dot-bar">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+        </div>
+
+        <!-- SCREEN 5: Result Screen -->
+        <div class="screen" id="screen-result">
+            <div class="result-title">테스트 종료</div>
+            <div class="result-score-box">
+                <p>1라운드 성공 문항 수: <strong id="r1-final-score" style="color:#222;">0</strong>개</p>
+                <p>2라운드 성공 문항 수: <strong id="r2-final-score" style="color:#222;">0</strong>개</p>
+                <hr style="margin: 15px 0; border: none; border-top: 1px solid #eee;">
+                <p>최종 총점</p>
+                <h2 id="total-score">0점</h2>
+            </div>
+            <button class="btn-next" onclick="location.reload()">다시 도전하기</button>
+        </div>
+
+    </div>
+
+    <script>
+        // Global Game State Variables
+        let timerInterval = null;
+        let timeLeft = 60;
+        
+        let r1SuccessCount = 0;
+        let r2SuccessCount = 0;
+
+        let isWaiting = true;
+        let waitTimeout = null;
+
+        // Round 1 State
+        let r1ActiveNumber = null;
+
+        // Round 2 State
+        let r2DoubleNums = [];
+        let r2SkipNums = [];
+        let r2CurrentTargetIndex = 1;
+        let r2ClickCountForCurrent = 0;
+
+        // UI Helpers
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function updateTimerDisplay(seconds) {
+            const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const sec = String(seconds % 60).padStart(2, '0');
+            const timerEl = document.getElementById('timer-display');
+            timerEl.textContent = `${min}:${sec}`;
+            
+            if (seconds <= 10) {
+                timerEl.classList.add('warning');
+            } else {
+                timerEl.classList.remove('warning');
+            }
+        }
+
+        function startTimer(duration, onTimeUp) {
+            clearInterval(timerInterval);
+            timeLeft = duration;
+            document.getElementById('timer-display').style.display = 'block';
+            updateTimerDisplay(timeLeft);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timeLeft);
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    onTimeUp();
+                }
+            }, 1000);
+        }
+
+        // ================= ROUND 1 LOGIC =================
+
+        function startRound1Countdown() {
+            document.getElementById('btn-start-r1').style.display = 'none';
+            document.getElementById('r1-progress-container').style.display = 'block';
+            
+            const countdownEl = document.getElementById('r1-guide-countdown');
+            countdownEl.style.display = 'block';
+
+            let guideTime = 8;
+            const fillEl = document.getElementById('r1-guide-progress');
+            
+            const guideInterval = setInterval(() => {
+                guideTime -= 0.1;
+                const percentage = ((8 - guideTime) / 8) * 100;
+                fillEl.style.width = `${percentage}%`;
+                countdownEl.textContent = `${Math.ceil(guideTime)}초가 지나면 자동으로 시작합니다.`;
+
+                if (guideTime <= 0) {
+                    clearInterval(guideInterval);
+                    startRound1Play();
+                }
+            }, 100);
+        }
+
+        function startRound1Play() {
+            showScreen('screen-r1-play');
+            startTimer(60, endRound1);
+            nextR1Question();
+        }
+
+        function nextR1Question() {
+            isWaiting = true;
+            r1ActiveNumber = null;
+
+            const titleEl = document.getElementById('r1-status-title');
+            const feedbackEl = document.getElementById('r1-feedback');
+            const keypadEl = document.getElementById('r1-keypad');
+
+            titleEl.textContent = "준비";
+            titleEl.style.color = "#222";
+            feedbackEl.className = "feedback-banner error";
+            feedbackEl.textContent = "신호가 제시되기 전 버튼을 클릭하면 오답으로 처리됩니다. 곧 응답 규칙이 제시됩니다.";
+            feedbackEl.style.display = "block";
+
+            // Render Keypad (1~9 Fixed)
+            keypadEl.innerHTML = '';
+            for (let i = 1; i <= 9; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'key-btn';
+                btn.textContent = i;
+                btn.onclick = () => handleR1KeyClick(i);
+                keypadEl.appendChild(btn);
+            }
+
+            // Wait 2~3 Seconds Randomly
+            const waitTime = Math.floor(Math.random() * 1000) + 2000;
+            clearTimeout(waitTimeout);
+            waitTimeout = setTimeout(() => {
+                isWaiting = false;
+                r1ActiveNumber = Math.floor(Math.random() * 9) + 1;
+                
+                titleEl.textContent = "활성화된 숫자를 최대한 빠르게 클릭해 주세요!";
+                feedbackEl.style.display = "none";
+
+                // Highlight Active Key
+                const btns = keypadEl.querySelectorAll('.key-btn');
+                btns[r1ActiveNumber - 1].classList.add('highlight');
+            }, waitTime);
+        }
+
+        function handleR1KeyClick(num) {
+            if (isWaiting) {
+                clearTimeout(waitTimeout);
+                showR1Feedback(false, "신호 제시 전 클릭하였습니다.");
+                return;
+            }
+
+            if (num === r1ActiveNumber) {
+                r1SuccessCount++;
+                showR1Feedback(true, "성공!");
+            } else {
+                showR1Feedback(false, "실패!");
+            }
+        }
+
+        function showR1Feedback(isSuccess, msg) {
+            isWaiting = true;
+            const feedbackEl = document.getElementById('r1-feedback');
+            feedbackEl.style.display = "block";
+            feedbackEl.className = `feedback-banner ${isSuccess ? 'success' : 'error'}`;
+            feedbackEl.textContent = msg;
+
+            setTimeout(() => {
+                nextR1Question();
+            }, 800);
+        }
+
+        function endRound1() {
+            clearTimeout(waitTimeout);
+            showRound2Guide();
+        }
+
+        // ================= ROUND 2 LOGIC =================
+
+        function showRound2Guide() {
+            document.getElementById('round-label').textContent = "라운드 2";
+            showScreen('screen-r2-guide');
+            document.getElementById('timer-display').style.display = 'none';
+        }
+
+        function startRound2Countdown() {
+            document.getElementById('btn-start-r2').style.display = 'none';
+            document.getElementById('r2-progress-container').style.display = 'block';
+
+            const countdownEl = document.getElementById('r2-guide-countdown');
+            countdownEl.style.display = 'block';
+
+            let guideTime = 9;
+            const fillEl = document.getElementById('r2-guide-progress');
+            
+            const guideInterval = setInterval(() => {
+                guideTime -= 0.1;
+                const percentage = ((9 - guideTime) / 9) * 100;
+                fillEl.style.width = `${percentage}%`;
+                countdownEl.textContent = `${Math.ceil(guideTime)}초가 지나면 자동으로 시작합니다.`;
+
+                if (guideTime <= 0) {
+                    clearInterval(guideInterval);
+                    startRound2Play();
+                }
+            }, 100);
+        }
+
+        function startRound2Play() {
+            showScreen('screen-r2-play');
+            startTimer(120, endRound2);
+            nextR2Question();
+        }
+
+        function generateR2Rules() {
+            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            numbers.sort(() => Math.random() - 0.5);
+
+            r2DoubleNums = [numbers[0], numbers[1]].sort((a,b) => a - b);
+            r2SkipNums = [numbers[2]];
+
+            const doubleContainer = document.getElementById('double-list');
+            doubleContainer.innerHTML = r2DoubleNums.map(n => `<span class="num-box">${n}</span>`).join(' ');
+
+            const skipContainer = document.getElementById('skip-list');
+            skipContainer.innerHTML = r2SkipNums.map(n => `<span class="num-box">${n}</span>`).join(' ');
+        }
+
+        function resetR2Dots() {
+            const dots = document.querySelectorAll('#r2-dot-bar .dot');
+            dots.forEach(d => d.className = 'dot');
+        }
+
+        function updateR2Dots(currentIndex, isError = false) {
+            const dots = document.querySelectorAll('#r2-dot-bar .dot');
+            dots.forEach((d, idx) => {
+                if (idx < currentIndex - 1) {
+                    d.className = 'dot active';
+                } else if (idx === currentIndex - 1 && isError) {
+                    d.className = 'dot error';
+                } else {
+                    d.className = 'dot';
+                }
+            });
+        }
+
+        function nextR2Question() {
+            isWaiting = true;
+            r2CurrentTargetIndex = 1;
+            r2ClickCountForCurrent = 0;
+
+            const titleEl = document.getElementById('r2-status-title');
+            const ruleContainer = document.getElementById('r2-rule-container');
+            const feedbackEl = document.getElementById('r2-feedback');
+            const keypadEl = document.getElementById('r2-keypad');
+
+            titleEl.textContent = "준비";
+            ruleContainer.style.visibility = "hidden";
+            feedbackEl.className = "feedback-banner error";
+            feedbackEl.textContent = "신호가 제시되기 전 버튼을 클릭하면 오답으로 처리됩니다. 곧 응답 규칙이 제시됩니다.";
+            feedbackEl.style.display = "block";
+
+            generateR2Rules();
+            resetR2Dots();
+
+            const shuffledNums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+            keypadEl.innerHTML = '';
+            shuffledNums.forEach(num => {
+                const btn = document.createElement('div');
+                btn.className = 'key-btn';
+                btn.textContent = num;
+                btn.onclick = (e) => handleR2KeyClick(num, e.target);
+                keypadEl.appendChild(btn);
+            });
+
+            clearTimeout(waitTimeout);
+            waitTimeout = setTimeout(() => {
+                isWaiting = false;
+                titleEl.textContent = "1부터 9까지 최대한 빠르게 클릭해 주세요!";
+                ruleContainer.style.visibility = "visible";
+                feedbackEl.style.display = "none";
+
+                checkAndAdvanceTarget();
+            }, 1500);
+        }
+
+        function checkAndAdvanceTarget() {
+            while (r2CurrentTargetIndex <= 9 && r2SkipNums.includes(r2CurrentTargetIndex)) {
+                r2CurrentTargetIndex++;
+            }
+        }
+
+        function handleR2KeyClick(num, btnEl) {
+            if (isWaiting) {
+                clearTimeout(waitTimeout);
+                showR2Feedback(false, "신호 제시 전 클릭하였습니다.", btnEl);
+                return;
+            }
+
+            if (num !== r2CurrentTargetIndex) {
+                showR2Feedback(false, "응답 규칙을 지키지 않았습니다. 곧 다음 문항이 제시됩니다.", btnEl);
+                return;
+            }
+
+            if (r2DoubleNums.includes(num)) {
+                r2ClickCountForCurrent++;
+                if (r2ClickCountForCurrent === 1) {
+                    return;
+                }
+            }
+
+            updateR2Dots(r2CurrentTargetIndex);
+            r2CurrentTargetIndex++;
+            r2ClickCountForCurrent = 0;
+
+            checkAndAdvanceTarget();
+
+            if (r2CurrentTargetIndex > 9) {
+                const dots = document.querySelectorAll('#r2-dot-bar .dot');
+                dots.forEach(d => d.className = 'dot active');
+                r2SuccessCount++;
+                showR2Feedback(true, "정확하게 정답했습니다. 곧 다음 문항이 제시됩니다.");
+            }
+        }
+
+        function showR2Feedback(isSuccess, msg, clickedBtn = null) {
+            isWaiting = true;
+            const feedbackEl = document.getElementById('r2-feedback');
+            feedbackEl.style.display = "block";
+            feedbackEl.className = `feedback-banner ${isSuccess ? 'success' : 'error'}`;
+            feedbackEl.textContent = msg;
+
+            if (!isSuccess) {
+                document.getElementById('r2-status-title').textContent = "실패";
+                if (clickedBtn) {
+                    clickedBtn.style.background = "#495057";
+                    clickedBtn.style.color = "#ffffff";
+                }
+            } else {
+                document.getElementById('r2-status-title').textContent = "성공";
+            }
+
+            setTimeout(() => {
+                nextR2Question();
+            }, 1200);
+        }
+
+        function endRound2() {
+            clearTimeout(waitTimeout);
+            showScreen('screen-result');
+            document.getElementById('timer-display').style.display = 'none';
+
+            document.getElementById('r1-final-score').textContent = r1SuccessCount;
+            document.getElementById('r2-final-score').textContent = r2SuccessCount;
+            document.getElementById('total-score').textContent = `${(r1SuccessCount * 10) + (r2SuccessCount * 20)}점`;
+        }
+    </script>
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            if (document.getElementById("floating-back-btn")) return;
+            const btn = document.createElement("a");
+            btn.id = "floating-back-btn";
+            btn.href = "index.html";
+            btn.innerHTML = "🏠 메인으로";
+            btn.style.cssText = "position:fixed !important; top:20px !important; right:20px !important; z-index:2147483647 !important; background:#4f46e5 !important; color:white !important; padding:10px 20px !important; border-radius:30px !important; font-family:sans-serif !important; font-size:14px !important; font-weight:bold !important; text-decoration:none !important; box-shadow:0 4px 15px rgba(0,0,0,0.2) !important; cursor:pointer !important;";
+            btn.onclick = (e) => { e.preventDefault(); location.href = "index.html"; };
+            document.body.appendChild(btn);
+        });
+    </script>
+</body>
+</html>

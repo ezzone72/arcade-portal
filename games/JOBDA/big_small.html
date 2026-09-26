@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOBDA 개수 비교하기 AI 역량검사 학습 트레이너</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-cyan: #38bdf8;
+            --accent-purple: #a855f7;
+            --accent-yellow: #f59e0b;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body {
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            width: 860px;
+            height: 620px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        /* Header UI */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #334155;
+        }
+        .title-group h1 { font-size: 20px; color: var(--accent-cyan); }
+        .title-group p { font-size: 13px; color: var(--text-sub); margin-top: 2px; }
+        
+        .stats-group { display: flex; gap: 16px; }
+        .stat-badge {
+            background: #0f172a;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+        .stat-badge .label { font-size: 10px; color: var(--text-sub); display: block; }
+        .stat-badge .val { font-size: 16px; font-weight: bold; color: var(--accent-yellow); }
+
+        /* Main Display Arena */
+        .stage-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin: 16px 0;
+        }
+
+        /* PHASE 1: Observation Screen */
+        .observation-screen {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+            height: 100%;
+        }
+        .word-box {
+            background: #090d16;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .word-item {
+            position: absolute;
+            font-weight: 800;
+            line-height: 1;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        /* PHASE 2: Choice Screen */
+        .choice-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            gap: 24px;
+        }
+        .choice-screen.active { display: flex; }
+
+        .timer-container {
+            width: 100%;
+            height: 12px;
+            background: #0f172a;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+        .timer-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+        }
+
+        .choice-instruction { font-size: 18px; font-weight: 700; color: var(--accent-cyan); }
+
+        .choice-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            width: 100%;
+            max-width: 650px;
+        }
+        .btn-word-choice {
+            padding: 30px 20px;
+            font-size: 32px;
+            font-weight: 800;
+            border: 2px solid #334155;
+            border-radius: 16px;
+            cursor: pointer;
+            color: white;
+            background: #1e293b;
+            transition: all 0.1s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+        }
+        .btn-word-choice.left { border-color: #3b82f6; background: #1e3a8a; }
+        .btn-word-choice.left:hover { background: #2563eb; transform: translateY(-3px); }
+        .btn-word-choice.right { border-color: #a855f7; background: #581c87; }
+        .btn-word-choice.right:hover { background: #7c3aed; transform: translateY(-3px); }
+
+        /* Modal Overlay Screens */
+        .modal-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.98);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            padding: 30px;
+            text-align: center;
+        }
+        .btn-action {
+            padding: 14px 32px;
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3);
+            transition: transform 0.2s;
+        }
+        .btn-action:hover { transform: scale(1.05); }
+        .btn-action.secondary {
+            background: #334155;
+            box-shadow: none;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 16px 0;
+            width: 100%;
+            max-width: 500px;
+        }
+        .result-card {
+            background: #1e293b;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+        .result-card .r-val { font-size: 22px; font-weight: bold; color: var(--accent-cyan); }
+        .result-card .r-lbl { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+
+        /* Review Screen Specifics */
+        .review-list {
+            width: 100%;
+            max-height: 320px;
+            overflow-y: auto;
+            margin: 16px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 8px;
+        }
+        .review-item {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .review-item .rnd { color: var(--text-sub); font-weight: bold; width: 60px; text-align: left; }
+        .review-item .pair { font-size: 16px; font-weight: 700; color: white; display: flex; gap: 12px; }
+        .review-item .cnt { color: var(--accent-cyan); font-weight: bold; }
+        .review-item .user-ans { color: var(--accent-red); font-weight: bold; }
+        .review-item .correct-ans { color: var(--accent-green); font-weight: bold; }
+
+        /* Scrollbar styling */
+        .review-list::-webkit-scrollbar { width: 6px; }
+        .review-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+        .flash-correct { animation: flashGlowCorrect 0.25s ease; }
+        .flash-wrong { animation: flashGlowWrong 0.25s ease; }
+        @keyframes flashGlowCorrect { 0% { border-color: var(--accent-green); box-shadow: 0 0 30px rgba(34, 197, 94, 0.5); } }
+        @keyframes flashGlowWrong { 0% { border-color: var(--accent-red); box-shadow: 0 0 30px rgba(239, 68, 68, 0.5); } }
+    </style>
+</head>
+<body>
+
+    <div class="game-card" id="gameCard">
+        
+        <!-- Header Info -->
+        <div class="header">
+            <div class="title-group">
+                <h1>🔤 JOBDA 개수 비교하기 (복습 피드백형)</h1>
+                <p>1초 관찰 ➔ 3초 선택 ➔ 종료 후 오답 상세 복습 지원</p>
+            </div>
+            <div class="stats-group">
+                <div class="stat-badge">
+                    <span class="label">ROUND</span>
+                    <span class="val" id="roundText">1 / 50</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="label">SCORE</span>
+                    <span class="val" id="scoreText">0</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="label">ACCURACY</span>
+                    <span class="val" id="accText">100%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage Area -->
+        <div class="stage-area">
+            <div class="observation-screen" id="obsScreen">
+                <div class="word-box" id="leftBox"></div>
+                <div class="word-box" id="rightBox"></div>
+            </div>
+
+            <div class="choice-screen" id="choiceScreen">
+                <div class="timer-container">
+                    <div class="timer-bar" id="timerBar"></div>
+                </div>
+                <div class="choice-instruction">⏱️ 개수가 더 많았던 글자를 마우스로 선택하세요!</div>
+                <div class="choice-buttons">
+                    <button class="btn-word-choice left" onclick="makeChoice('LEFT')">
+                        <span id="btnLeftText">단어 A</span>
+                    </button>
+                    <button class="btn-word-choice right" onclick="makeChoice('RIGHT')">
+                        <span id="btnRightText">단어 B</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Start Overlay Screen -->
+        <div class="modal-screen" id="startScreen">
+            <h2 style="font-size: 28px; color: var(--accent-cyan); margin-bottom: 12px;">JOBDA 개수 비교하기 트레이닝</h2>
+            <p style="color: var(--text-sub); line-height: 1.8; max-width: 520px;">
+                1. <b>[1초 관찰]</b> 글자 위치와 상관없이 <b>실제 개수</b>를 기억하세요.<br>
+                2. <b>[화면 전환]</b> 전환 후 <b>3초 안</b>에 더 많은 단어를 클릭하세요.<br>
+                3. <b>[오답 복습]</b> 검사가 끝나면 틀린 문제의 <b>글자 수 내역</b>을 확인할 수 있습니다!
+            </p>
+            <button class="btn-action" style="margin-top:24px;" onclick="startGame()">🚀 트레이닝 시작</button>
+        </div>
+
+        <!-- Result & Review Screen -->
+        <div class="modal-screen" id="resultScreen" style="display: none;">
+            <h2 style="font-size: 26px; color: var(--accent-yellow); margin-bottom: 4px;" id="resultTitle">트레이닝 완료!</h2>
+            <p style="color: var(--text-sub);" id="resultSub">50라운드 검사 결과 분석입니다.</p>
+            
+            <div class="result-grid" id="resultStats">
+                <div class="result-card">
+                    <div class="r-val" id="resScore">0</div>
+                    <div class="r-lbl">최종 점수</div>
+                </div>
+                <div class="result-card">
+                    <div class="r-val" id="resAcc">0%</div>
+                    <div class="r-lbl">정답률</div>
+                </div>
+                <div class="result-card">
+                    <div class="r-val" id="resWrong">0</div>
+                    <div class="r-lbl">틀린 개수</div>
+                </div>
+            </div>
+
+            <!-- Review List Container -->
+            <div class="review-list" id="reviewList" style="display: none;"></div>
+
+            <div style="display: flex; gap: 12px; margin-top: 12px;">
+                <button class="btn-action secondary" id="btnReviewToggle" onclick="toggleReviewView()">📋 오답 다시보기</button>
+                <button class="btn-action" onclick="startGame()">🔄 다시 도전하기</button>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    const ANTONYMS_50 = [
+        ["성공", "실패"], ["승리", "패배"], ["기쁨", "슬픔"], ["증가", "감소"], ["상승", "하강"],
+        ["희망", "절망"], ["긍정", "부정"], ["천국", "지옥"], ["찬성", "반대"], ["수입", "지출"],
+        ["평화", "전쟁"], ["창조", "파괴"], ["확장", "축소"], ["진실", "거짓"], ["안전", "위험"],
+        ["전진", "후퇴"], ["최고", "최악"], ["결합", "분리"], ["이익", "손실"], ["주간", "야간"],
+        ["상류", "하류"], ["과거", "미래"], ["사랑", "증오"], ["칭찬", "비난"], ["수동", "능동"],
+        ["자율", "타율"], ["비옥", "황폐"], ["영구", "일시"], ["청결", "오염"], ["온난", "한랭"],
+        ["풍부", "빈곤"], ["보수", "진보"], ["연속", "단절"], ["통합", "분열"], ["수용", "거절"],
+        ["정직", "허위"], ["탄생", "소멸"], ["조밀", "희박"], ["급진", "완만"], ["영광", "굴욕"],
+        ["강함", "약함"], ["음지", "양지"], ["신속", "지연"], ["선함", "악함"], ["행복", "불행"],
+        ["장점", "단점"], ["원인", "결과"], ["시작", "종말"], ["동의", "반대"], ["번영", "몰락"]
+    ];
+
+    const TOTAL_ROUNDS = 50;
+    const EXPOSURE_TIME = 1000;
+    const CHOICE_LIMIT_TIME = 3000;
+
+    let currentRound = 0;
+    let score = 0;
+    let correctCount = 0;
+    let totalResponseTime = 0;
+    
+    let answerSide = ''; 
+    let animFrameId = null;
+    let phaseTimeoutId = null;
+    let choiceStartTime = 0;
+    let isPlaying = false;
+
+    // 복습 데이터 저장용 리스트
+    let historyLogs = [];
+
+    const obsScreen = document.getElementById('obsScreen');
+    const choiceScreen = document.getElementById('choiceScreen');
+    const leftBox = document.getElementById('leftBox');
+    const rightBox = document.getElementById('rightBox');
+    const timerBar = document.getElementById('timerBar');
+    const gameCard = document.getElementById('gameCard');
+    const btnLeftText = document.getElementById('btnLeftText');
+    const btnRightText = document.getElementById('btnRightText');
+    const reviewList = document.getElementById('reviewList');
+
+    function startGame() {
+        currentRound = 0;
+        score = 0;
+        correctCount = 0;
+        totalResponseTime = 0;
+        historyLogs = [];
+        isPlaying = true;
+
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('resultScreen').style.display = 'none';
+        
+        nextRound();
+    }
+
+    function nextRound() {
+        if (currentRound >= TOTAL_ROUNDS) {
+            endGame();
+            return;
+        }
+
+        currentRound++;
+        document.getElementById('roundText').textContent = `${currentRound} / ${TOTAL_ROUNDS}`;
+        document.getElementById('scoreText').textContent = score;
+        document.getElementById('accText').textContent = `${Math.round((correctCount / Math.max(1, currentRound - 1)) * 100)}%`;
+
+        obsScreen.style.display = 'grid';
+        choiceScreen.classList.remove('active');
+        leftBox.innerHTML = '';
+        rightBox.innerHTML = '';
+
+        const wordPair = ANTONYMS_50[currentRound - 1];
+        btnLeftText.textContent = wordPair[0];
+        btnRightText.textContent = wordPair[1];
+
+        let baseCount, diff;
+        if (currentRound <= 10) {
+            baseCount = Math.floor(Math.random() * 8) + 12;
+            diff = Math.floor(Math.random() * 4) + 8;
+        } else if (currentRound <= 30) {
+            baseCount = Math.floor(Math.random() * 10) + 20;
+            diff = Math.floor(Math.random() * 3) + 4;
+        } else {
+            baseCount = Math.floor(Math.random() * 12) + 28;
+            diff = Math.floor(Math.random() * 2) + 1;
+        }
+
+        const leftIsMore = Math.random() < 0.5;
+        let leftCount, rightCount;
+
+        if (leftIsMore) {
+            leftCount = baseCount + diff;
+            rightCount = baseCount;
+            answerSide = 'LEFT';
+        } else {
+            leftCount = baseCount;
+            rightCount = baseCount + diff;
+            answerSide = 'RIGHT';
+        }
+
+        // 라운드 기록 세팅
+        currentRoundData = {
+            round: currentRound,
+            leftWord: wordPair[0],
+            rightWord: wordPair[1],
+            leftCount: leftCount,
+            rightCount: rightCount,
+            correctSide: answerSide,
+            userChoice: null,
+            isCorrect: false
+        };
+
+        renderWords(leftBox, wordPair[0], leftCount, !leftIsMore);
+        renderWords(rightBox, wordPair[1], rightCount, leftIsMore);
+
+        clearTimeout(phaseTimeoutId);
+        phaseTimeoutId = setTimeout(() => {
+            if (isPlaying) startChoicePhase();
+        }, EXPOSURE_TIME);
+    }
+
+    let currentRoundData = {};
+
+function renderWords(container, wordText, count, isFewerSide) {
+    const boxWidth = 360;
+    const boxHeight = 360;
+
+    // 🎯 [핵심 수정] 50% 확률로 폰트 크기 패턴을 뒤섞어 꼼수 차단
+    // 1: 적은 쪽이 큼 (착시) / 2: 많은 쪽이 큼 (역착시) / 3: 양쪽 동일 크기 범위
+    const illusionType = Math.floor(Math.random() * 3);
+
+    for (let i = 0; i < count; i++) {
+        const span = document.createElement('span');
+        span.className = 'word-item';
+        span.textContent = wordText;
+
+        let fontSize;
+        if (illusionType === 0) {
+            // 패턴 A: 수가 적은 쪽이 큰 폰트
+            fontSize = isFewerSide ? (Math.floor(Math.random() * 12) + 26) : (Math.floor(Math.random() * 8) + 14);
+        } else if (illusionType === 1) {
+            // 패턴 B: 수가 많은 쪽이 오히려 큰 폰트
+            fontSize = isFewerSide ? (Math.floor(Math.random() * 8) + 14) : (Math.floor(Math.random() * 12) + 26);
+        } else {
+            // 패턴 C: 양쪽 모두 비슷한 랜덤 폰트 (18px ~ 28px)
+            fontSize = Math.floor(Math.random() * 11) + 18;
+        }
+
+        span.style.fontSize = `${fontSize}px`;
+        
+        const lightness = Math.floor(Math.random() * 30) + 70;
+        span.style.color = `hsl(215, 80%, ${lightness}%)`;
+
+        const posX = Math.floor(Math.random() * (boxWidth - fontSize * 2)) + 15;
+        const posY = Math.floor(Math.random() * (boxHeight - fontSize)) + 30;
+
+        span.style.left = `${posX}px`;
+        span.style.top = `${posY}px`;
+
+        const rot = Math.floor(Math.random() * 30) - 15;
+        span.style.transform = `rotate(${rot}deg)`;
+
+        container.appendChild(span);
+    }
+}
+    function startChoicePhase() {
+        obsScreen.style.display = 'none';
+        choiceScreen.classList.add('active');
+
+        choiceStartTime = performance.now();
+        runChoiceTimer();
+    }
+
+    function runChoiceTimer() {
+        cancelAnimationFrame(animFrameId);
+        
+        function update() {
+            const elapsed = performance.now() - choiceStartTime;
+            const remainingRatio = Math.max(0, 1 - (elapsed / CHOICE_LIMIT_TIME));
+            
+            timerBar.style.width = `${remainingRatio * 100}%`;
+
+            if (elapsed >= CHOICE_LIMIT_TIME) {
+                makeChoice('TIMEOUT');
+            } else if (isPlaying) {
+                animFrameId = requestAnimationFrame(update);
+            }
+        }
+        animFrameId = requestAnimationFrame(update);
+    }
+
+    function makeChoice(userChoice) {
+        if (!isPlaying || !choiceScreen.classList.contains('active')) return;
+
+        const responseTime = performance.now() - choiceStartTime;
+        cancelAnimationFrame(animFrameId);
+
+        const isCorrect = (userChoice === answerSide);
+
+        currentRoundData.userChoice = userChoice;
+        currentRoundData.isCorrect = isCorrect;
+        historyLogs.push(currentRoundData);
+
+        if (isCorrect) {
+            correctCount++;
+            const speedBonus = Math.max(0, Math.floor((3000 - responseTime) / 10));
+            score += (100 + speedBonus);
+            triggerFeedback('correct');
+        } else {
+            triggerFeedback('wrong');
+        }
+
+        totalResponseTime += responseTime;
+
+        setTimeout(() => {
+            if (isPlaying) nextRound();
+        }, 100);
+    }
+
+    function triggerFeedback(type) {
+        gameCard.classList.remove('flash-correct', 'flash-wrong');
+        void gameCard.offsetWidth;
+        if (type === 'correct') {
+            gameCard.classList.add('flash-correct');
+        } else {
+            gameCard.classList.add('flash-wrong');
+        }
+    }
+
+    function endGame() {
+        isPlaying = false;
+        cancelAnimationFrame(animFrameId);
+        clearTimeout(phaseTimeoutId);
+
+        const wrongCount = TOTAL_ROUNDS - correctCount;
+        const accuracy = Math.round((correctCount / TOTAL_ROUNDS) * 100);
+
+        document.getElementById('resScore').textContent = score;
+        document.getElementById('resAcc').textContent = `${accuracy}%`;
+        document.getElementById('resWrong').textContent = wrongCount;
+
+        // Reset Overlay Views
+        document.getElementById('resultStats').style.display = 'grid';
+        reviewList.style.display = 'none';
+        document.getElementById('btnReviewToggle').textContent = `📋 오답 다시보기 (${wrongCount})`;
+
+        renderReviewItems();
+
+        document.getElementById('resultScreen').style.display = 'flex';
+    }
+
+    function renderReviewItems() {
+        reviewList.innerHTML = '';
+        const wrongItems = historyLogs.filter(item => !item.isCorrect);
+
+        if (wrongItems.length === 0) {
+            reviewList.innerHTML = `<div style="color:var(--accent-green); padding: 20px;">🎉 완벽합니다! 틀린 문제가 하나도 없습니다!</div>`;
+            return;
+        }
+
+        wrongItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'review-item';
+
+            const userText = item.userChoice === 'TIMEOUT' ? '시간초과' : (item.userChoice === 'LEFT' ? item.leftWord : item.rightWord);
+            const correctText = item.correctSide === 'LEFT' ? item.leftWord : item.rightWord;
+
+            div.innerHTML = `
+                <span class="rnd">R-${item.round}</span>
+                <div class="pair">
+                    <span>${item.leftWord} (<b class="cnt">${item.leftCount}개</b>)</span>
+                    <span>vs</span>
+                    <span>${item.rightWord} (<b class="cnt">${item.rightCount}개</b>)</span>
+                </div>
+                <div>
+                    선택: <span class="user-ans">${userText}</span> | 정답: <span class="correct-ans">${correctText}</span>
+                </div>
+            `;
+            reviewList.appendChild(div);
+        });
+    }
+
+    function toggleReviewView() {
+        const isReviewVisible = reviewList.style.display === 'flex';
+
+        if (isReviewVisible) {
+            reviewList.style.display = 'none';
+            document.getElementById('resultStats').style.display = 'grid';
+            document.getElementById('resultTitle').textContent = '트레이닝 완료!';
+            document.getElementById('btnReviewToggle').textContent = `📋 오답 다시보기 (${TOTAL_ROUNDS - correctCount})`;
+        } else {
+            reviewList.style.display = 'flex';
+            document.getElementById('resultStats').style.display = 'none';
+            document.getElementById('resultTitle').textContent = '오답 검토 리스트';
+            document.getElementById('btnReviewToggle').textContent = '📊 성적 요약 보기';
+        }
+    }
+</script>
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            if (document.getElementById("floating-back-btn")) return;
+            const btn = document.createElement("a");
+            btn.id = "floating-back-btn";
+            btn.href = "index.html";
+            btn.innerHTML = "🏠 메인으로";
+            btn.style.cssText = "position:fixed !important; top:20px !important; right:20px !important; z-index:2147483647 !important; background:#4f46e5 !important; color:white !important; padding:10px 20px !important; border-radius:30px !important; font-family:sans-serif !important; font-size:14px !important; font-weight:bold !important; text-decoration:none !important; box-shadow:0 4px 15px rgba(0,0,0,0.2) !important; cursor:pointer !important;";
+            btn.onclick = (e) => { e.preventDefault(); location.href = "index.html"; };
+            document.body.appendChild(btn);
+        });
+    </script>
+</body>
+</html>
